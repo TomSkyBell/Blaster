@@ -154,6 +154,8 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ThisClass::CrouchButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ThisClass::AimButtonPressed);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
+	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ThisClass::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ThisClass::MoveRight);
@@ -246,6 +248,25 @@ void ABlasterCharacter::AimButtonReleased()
 	}
 }
 
+void ABlasterCharacter::FireButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->FireButtonPressed(true);
+	}
+}
+
+void ABlasterCharacter::FireButtonReleased()
+{
+	if (Combat)
+	{
+		Combat->FireButtonPressed(false);
+	}
+}
+
+
+
+// =============================    Replication Work     ====================================//
 
 // RPC executed on the server, but server just does the work for the client instead.
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation(AWeapon* Weapon)
@@ -317,16 +338,6 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-bool ABlasterCharacter::IsWeaponEquipped() const
-{
-	return (Combat && Combat->EquippedWeapon);
-}
-
-bool ABlasterCharacter::IsAiming() const
-{
-	return (Combat && Combat->bAiming);
-}
-
 void ABlasterCharacter::FABRIK_IK_LeftHand()
 {
 	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh() && GetMesh())
@@ -341,4 +352,35 @@ void ABlasterCharacter::FABRIK_IK_LeftHand()
 		LeftHandTransform.SetRotation(FQuat(OutRotation));
 	}
 }
+
+void ABlasterCharacter::PlayFireMontage(bool bAiming) const
+{
+	if (!Combat || !Combat->EquippedWeapon) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && FireWeaponMontage && Combat->bFireButtonPressed)
+	{
+		AnimInstance->Montage_Play(FireWeaponMontage);
+		const FName SectionName = bAiming ? FName("Aim_Fire") : FName("Hip_Fire");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+	if (!Combat->bFireButtonPressed) AnimInstance->Montage_Stop(0.f, FireWeaponMontage);
+}
+
+
+bool ABlasterCharacter::IsWeaponEquipped() const
+{
+	return (Combat && Combat->EquippedWeapon);
+}
+
+bool ABlasterCharacter::IsAiming() const
+{
+	return (Combat && Combat->bAiming);
+}
+
+bool ABlasterCharacter::IsFireButtonPressed() const
+{
+	return (Combat && Combat->bFireButtonPressed);
+}
+
 

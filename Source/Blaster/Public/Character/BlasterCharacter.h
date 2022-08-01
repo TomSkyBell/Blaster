@@ -34,9 +34,12 @@ private:
 	void CrouchButtonPressed();
 	void AimButtonPressed();
 	void AimButtonReleased();
+	void FireButtonPressed();
+	void FireButtonReleased();
 
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
+	void PlayFireMontage(bool bAiming) const;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -76,6 +79,9 @@ private:
 	FTransform LeftHandTransform;
 	void FABRIK_IK_LeftHand();
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	class UAnimMontage* FireWeaponMontage;
+
 public:
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
@@ -83,4 +89,5 @@ public:
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE FTransform GetLeftHandTransform() { return LeftHandTransform; }
 	FORCEINLINE ETurningInPlace GetTuringInPlace() const { return TurningInPlace; }
+	bool IsFireButtonPressed() const;
 };

@@ -50,4 +50,9 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float AimCrouchWalkSpeed;
+
+	void FireButtonPressed(bool bPressed);
+
+	UPROPERTY(Replicated)
+	bool bFireButtonPressed;
 };

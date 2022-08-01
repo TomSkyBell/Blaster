@@ -98,3 +98,14 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
+void UCombatComponent::FireButtonPressed(bool bPressed)
+{
+	bFireButtonPressed = bPressed;
+	if (BlasterCharacter)
+	{
+		BlasterCharacter->PlayFireMontage(bAiming);
+	}
+}
+
+
+

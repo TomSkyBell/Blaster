@@ -37,6 +37,8 @@ void AWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Only the server has the authority to handle the collision event, so on each client will not see the effect of collision
+	// unless the collision is executed on the server.
 	if (HasAuthority())
 	{
 		// Overlap events are only generated on the server.

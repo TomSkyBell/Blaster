@@ -14,5 +14,7 @@ class BLASTER_API UAnimNotifyFootstep : public UAnimNotify_PlaySound
 {
 	GENERATED_BODY()
 
+	// If you don't override this function, unreal engine will do this notify for you in the animation sequence.
+	// The Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation) is deprecated.
 	virtual void Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference) override;
 };
