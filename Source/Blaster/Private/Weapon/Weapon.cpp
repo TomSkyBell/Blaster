@@ -31,6 +31,7 @@ AWeapon::AWeapon()
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Weapon Widget"));
 	PickupWidget->SetupAttachment(RootComponent);
 	PickupWidget->SetVisibility(false);
+
 }
 
 void AWeapon::BeginPlay()
@@ -70,6 +71,15 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 		PickupWidget->SetVisibility(bShowWidget);
 	}
 }
+
+void AWeapon::Fire()
+{
+	if (FireAnimation)
+	{
+		WeaponMesh->PlayAnimation(FireAnimation, false);
+	}
+}
+
 
 void AWeapon::SetWeaponState(EWeaponState State)
 {

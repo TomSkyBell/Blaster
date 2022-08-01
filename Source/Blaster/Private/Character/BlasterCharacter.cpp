@@ -358,13 +358,12 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming) const
 	if (!Combat || !Combat->EquippedWeapon) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && FireWeaponMontage && Combat->bFireButtonPressed)
+	if (AnimInstance && FireWeaponMontage)
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("Aim_Fire") : FName("Hip_Fire");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
-	if (!Combat->bFireButtonPressed) AnimInstance->Montage_Stop(0.f, FireWeaponMontage);
 }
 
 

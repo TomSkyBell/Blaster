@@ -23,9 +23,16 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
-	
+
+	// RPC, declared in protected domain, so that its child class could override the rpc function
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
+
+	UFUNCTION(Server, Reliable)
+	void ServerFire(bool bPressed);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastFire(bool bPressed);
 
 private:
 	class ABlasterCharacter* BlasterCharacter;
@@ -52,7 +59,6 @@ private:
 	float AimCrouchWalkSpeed;
 
 	void FireButtonPressed(bool bPressed);
-
-	UPROPERTY(Replicated)
+	
 	bool bFireButtonPressed;
 };

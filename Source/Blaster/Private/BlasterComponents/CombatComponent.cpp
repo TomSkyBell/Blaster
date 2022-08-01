@@ -43,7 +43,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 }
 
 
-// This function is executed on the server.
+// This function is invoked from the server.
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (!BlasterCharacter || !WeaponToEquip) return;
@@ -71,20 +71,24 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
-	// If the invoker is self, then we'd better do the work in 'Set Aiming' right away rather than waiting for
-	// the 'ServerSetAiming' because ServerSetAiming is the RPC which needs time to transfer the replication
-	// from the server to the client. The main effect of the 'ServerSetAiming' is to notify the other clients
-	// of the change of the invoker's replicated variable, not to notify the invoker itself (though it can).
+	// If the ownership is self, then we'd better do the 'variable assignment' work in 'Set Aiming' right away rather than waiting for
+	// the 'ServerSetAiming' because ServerSetAiming is the RPC which needs time to transfer the replication from the server to the client.
 	bAiming = bIsAiming;
 	if (BlasterCharacter)
 	{
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = bIsAiming ? AimCrouchWalkSpeed : BaseCrouchWalkSpeed;
 	}
+	// If the ownership is client, it'll be invoked from the server; if the ownership is server, it'll be invoked from the server as well.
 	ServerSetAiming(bIsAiming);
 }
 
-// This function is executed on the server.
+// RPC executed on the server.
+// If a client_A is doing the ServerRPC, it means the client itself locally knows what it's doing, and through the ServerRPC, it can make
+// the server know what it's doing, so the result is that the server's screen can display what the client is doing, but the other clients
+// do not know what client_A is doing. For this instance, bAiming is a replicated variable, so the other clients do know that client_A's
+// bAiming has been changed, but as for what else client_A is doing can't be known. So this is the shortcoming of the ServerRPC which info
+// cannot be shared between clients.
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 {
 	bAiming = bIsAiming;
@@ -98,14 +102,33 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
-void UCombatComponent::FireButtonPressed(bool bPressed)
+// RPC invoked from the server
+void UCombatComponent::ServerFire_Implementation(bool bPressed)
+{
+	// Multicast is invoked from the server, so the function will run on the server and all other clients.
+	MulticastFire(bPressed);
+}
+
+// If this function is invoked from the client, then it will only run on the client which makes no sense.
+// If this function is invoked from the server, then it will run on the server and all the clients.
+void UCombatComponent::MulticastFire_Implementation(bool bPressed)
 {
 	bFireButtonPressed = bPressed;
-	if (BlasterCharacter)
+	
+	if (!EquippedWeapon) return;
+	if (BlasterCharacter && bFireButtonPressed)
 	{
 		BlasterCharacter->PlayFireMontage(bAiming);
+		EquippedWeapon->Fire();
 	}
 }
 
-
+void UCombatComponent::FireButtonPressed(bool bPressed)
+{
+	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
+	// It's only for things which are very important in the game such as shooting will need RPC.
+	bFireButtonPressed = bPressed;
+	
+	ServerFire(bPressed);
+}
 
