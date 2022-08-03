@@ -6,11 +6,12 @@
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 UCombatComponent::UCombatComponent()
 {
-	PrimaryComponentTick.bCanEverTick = false;
+	PrimaryComponentTick.bCanEverTick = true;
 
 	BaseWalkSpeed = 600.f;
 	AimWalkSpeed = 150.f;
@@ -32,6 +33,9 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -120,6 +124,42 @@ void UCombatComponent::MulticastFire_Implementation(bool bPressed)
 	{
 		BlasterCharacter->PlayFireMontage(bAiming);
 		EquippedWeapon->Fire();
+	}
+}
+
+/**
+ * Project a line trace from the center of the screen to the target.
+ */
+void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
+{
+	FVector2D ViewportSize;
+	if (GEngine && GEngine->GameViewport)
+	{
+		GEngine->GameViewport->GetViewportSize(ViewportSize);
+	}
+	FVector2D CrosshairScreenLocation(ViewportSize * 0.5f);
+	FVector CrosshairWorldLocation;
+	FVector CrosshairWorldDirection;
+	bool bScreenToWorld = UGameplayStatics::DeprojectScreenToWorld(
+		UGameplayStatics::GetPlayerController(this, 0),
+		CrosshairScreenLocation,
+		CrosshairWorldLocation,
+		CrosshairWorldDirection
+	);
+	if (bScreenToWorld)
+	{
+		FVector Start = CrosshairWorldLocation;
+		FVector End = CrosshairWorldLocation + CrosshairWorldDirection * TRACE_LENGTH;
+		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
+
+		if (!HitResult.bBlockingHit)
+		{
+			HitResult.ImpactPoint = End;
+		}
+		else
+		{
+			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 12.f, 12, FColor::Red);
+		}
 	}
 }
 

@@ -63,7 +63,7 @@ private:
 	void OnRep_OverlappingWeapon(AWeapon* LastWeapon);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true"))
-	class UCombatComponent* Combat;
+	TObjectPtr<class UCombatComponent> Combat;
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed(AWeapon* Weapon);
