@@ -5,6 +5,7 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 AWeapon::AWeapon()
@@ -72,9 +73,9 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::Fire()
+void AWeapon::Fire(const FVector& HitTarget)
 {
-	if (FireAnimation)
+	if (FireAnimation && WeaponMesh)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}

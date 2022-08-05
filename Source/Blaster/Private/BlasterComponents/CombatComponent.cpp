@@ -123,7 +123,9 @@ void UCombatComponent::MulticastFire_Implementation(bool bPressed)
 	if (BlasterCharacter && bFireButtonPressed)
 	{
 		BlasterCharacter->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire();
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		EquippedWeapon->Fire(HitResult.ImpactPoint);
 	}
 }
 
