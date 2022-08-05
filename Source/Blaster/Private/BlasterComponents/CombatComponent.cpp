@@ -87,12 +87,7 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	ServerSetAiming(bIsAiming);
 }
 
-// RPC executed on the server.
-// If a client_A is doing the ServerRPC, it means the client itself locally knows what it's doing, and through the ServerRPC, it can make
-// the server know what it's doing, so the result is that the server's screen can display what the client is doing, but the other clients
-// do not know what client_A is doing. For this instance, bAiming is a replicated variable, so the other clients do know that client_A's
-// bAiming has been changed, but as for what else client_A is doing can't be known. So this is the shortcoming of the ServerRPC which info
-// cannot be shared between clients.
+
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 {
 	bAiming = bIsAiming;
@@ -106,7 +101,20 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
-// RPC invoked from the server
+// ===============================================================================================================
+// ********************************************  Multicast RPC  **************************************************
+// ===============================================================================================================
+
+// 1. If a client_A is calling ServerRPC, it means the server can know what client_A is doing, but if client_A is not doing locally, the Server
+// won't multicast to Client_A, which means Server screen can display what Client_A is doing, but Client screen won't display unless
+// Client_A itself locally do the work.
+// 2. Likewise, if all the clients do the RPC but not do its work locally, the Server won't multicast to them, so the clients' screen won't
+// display their work, no more to say the clients can know each other's work.
+// 3. If all the clients do their work locally, now the Server and the client itself can know what it's doing, but the clients can't know each
+// other's work, so the MulticastRPC is introduced. The clients just needn't do their own work locally but let the MulticastRPC executed from the
+// Server, so the Server will make all the clients do its own work and other clients' work.
+
+
 void UCombatComponent::ServerFire_Implementation(bool bPressed)
 {
 	// Multicast is invoked from the server, so the function will run on the server and all other clients.
@@ -127,6 +135,15 @@ void UCombatComponent::MulticastFire_Implementation(bool bPressed)
 		TraceUnderCrosshairs(HitResult);
 		EquippedWeapon->Fire(HitResult.ImpactPoint);
 	}
+}
+
+void UCombatComponent::FireButtonPressed(bool bPressed)
+{
+	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
+	// It's only for things which are very important in the game such as shooting will need RPC.
+	bFireButtonPressed = bPressed;
+	
+	ServerFire(bPressed);
 }
 
 /**
@@ -164,13 +181,3 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		}
 	}
 }
-
-void UCombatComponent::FireButtonPressed(bool bPressed)
-{
-	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
-	// It's only for things which are very important in the game such as shooting will need RPC.
-	bFireButtonPressed = bPressed;
-	
-	ServerFire(bPressed);
-}
-

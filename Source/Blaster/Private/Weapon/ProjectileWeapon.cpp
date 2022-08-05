@@ -10,6 +10,8 @@ void AProjectileWeapon::Fire(const FVector& HitTarget)
 	// Common game logic (weapon functionality)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
 	Super::Fire(HitTarget);
+	
+	if (!HasAuthority()) return;
 
 	// Respective game logic (weapon functionality)
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));

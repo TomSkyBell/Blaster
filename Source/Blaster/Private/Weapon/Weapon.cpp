@@ -12,7 +12,8 @@ AWeapon::AWeapon()
 {
 	PrimaryActorTick.bCanEverTick = false;
 
-	// All the machines can see the weapon.
+	// All the machines can see the weapon, only the Server has the authority.
+	// If bReplicates = false, all the machines have authority.
 	bReplicates = true;
 	
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon Mesh"));
