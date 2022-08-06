@@ -10,15 +10,17 @@ AProjectile::AProjectile()
 {
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-
-	// The detailed config can be set in blueprint.
+	
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
 	SetRootComponent(CollisionBox);
+	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 
 	// ProjectileMovementComponent updates the position of another component during its tick.
 	// If not SetUpdatedComponent(), then automatically set the root component as the updated component.
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->InitialSpeed = 3000.f;
+	ProjectileMovementComponent->MaxSpeed = 3500.f;
 }
 
 void AProjectile::BeginPlay()

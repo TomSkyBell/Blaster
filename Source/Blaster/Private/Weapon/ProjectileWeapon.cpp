@@ -3,6 +3,7 @@
 
 #include "Weapon/ProjectileWeapon.h"
 #include "Engine/SkeletalMeshSocket.h"
+#include "Weapon/Casing.h"
 #include "Weapon/Projectile.h"
 
 void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
@@ -11,10 +12,16 @@ void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
 	Super::Fire(TraceHitTarget);
 
+	// Respective game logic (weapon functionality)
+	FireBullet(TraceHitTarget);
+	EjectBulletShell();
+
 	// Can't be tested on one machine, should be tested over the network.
 	if (!HasAuthority()) return;
-	
-	// Respective game logic (weapon functionality)
+}
+
+void AProjectileWeapon::FireBullet(const FVector& TraceHitTarget)
+{
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
 	if (MuzzleFlashSocket)
 	{
@@ -42,3 +49,27 @@ void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 		}
 	}
 }
+
+void AProjectileWeapon::EjectBulletShell()
+{
+	const USkeletalMeshSocket* AmmoEjectSocket = GetWeaponMesh()->GetSocketByName(FName("AmmoEject"));
+	if (AmmoEjectSocket)
+	{
+		const FTransform SocketTransform = AmmoEjectSocket->GetSocketTransform(GetWeaponMesh());
+		if (CasingClass)
+		{
+			UWorld* World = GetWorld();
+			if (World)
+			{
+				// Spawn a child object (ProjectileClass* ) in the world and return the base object reference (AProjectile* )
+				World->SpawnActor<ACasing>(
+						CasingClass,
+						SocketTransform.GetLocation(),
+						SocketTransform.GetRotation().Rotator(),
+						FActorSpawnParameters()
+						);
+			}
+		}
+	}
+}
+

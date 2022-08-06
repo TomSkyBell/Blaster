@@ -21,5 +21,10 @@ private:
 	// Class Reference. ProjectileClass can be populated with AProjectile or anything derived from AProjectile.
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class AProjectile> ProjectileClass;
-	
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ACasing> CasingClass;
+
+	void FireBullet(const FVector& TraceHitTarget);
+	void EjectBulletShell();
 };
