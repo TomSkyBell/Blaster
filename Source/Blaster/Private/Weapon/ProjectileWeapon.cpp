@@ -5,20 +5,21 @@
 #include "Engine/SkeletalMeshSocket.h"
 #include "Weapon/Projectile.h"
 
-void AProjectileWeapon::Fire(const FVector& HitTarget)
+void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 {
 	// Common game logic (weapon functionality)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
-	Super::Fire(HitTarget);
-	
-	if (!HasAuthority()) return;
+	Super::Fire(TraceHitTarget);
 
+	// Can't be tested on one machine, should be tested over the network.
+	if (!HasAuthority()) return;
+	
 	// Respective game logic (weapon functionality)
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
 	if (MuzzleFlashSocket)
 	{
 		const FTransform SocketTransform = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh());
-		const FVector ToTargetDirection = HitTarget - SocketTransform.GetLocation();
+		const FVector ToTargetDirection = TraceHitTarget - SocketTransform.GetLocation();
 		const FRotator TargetRotation = ToTargetDirection.Rotation();
 		APawn* InstigatorPawn = Cast<APawn>(GetOwner());
 		if (ProjectileClass && InstigatorPawn)

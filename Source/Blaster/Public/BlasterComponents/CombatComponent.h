@@ -29,11 +29,12 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void ServerSetAiming(bool bIsAiming);
 
+	// FVector_NetQuantize is the child of FVector. It is less precise than FVector for a lower network bandwidth.
 	UFUNCTION(Server, Reliable)
-	void ServerFire(bool bPressed);
+	void ServerFire(const FVector_NetQuantize& TraceHitTarget);	
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastFire(bool bPressed);
+	void MulticastFire(const FVector_NetQuantize& TraceHitTarget);
 	
 	void TraceUnderCrosshairs(FHitResult& HitResult);
 

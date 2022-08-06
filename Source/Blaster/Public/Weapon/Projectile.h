@@ -21,13 +21,16 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY(EditAnywhere)
 	class UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* Tracer; 
+	class UParticleSystem* Tracer;
+
+	UPROPERTY(VisibleAnywhere)
+	class UParticleSystemComponent* TracerComponent;
 
 };

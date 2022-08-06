@@ -33,9 +33,6 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -115,25 +112,21 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 // Server, so the Server will make all the clients do its own work and other clients' work.
 
 
-void UCombatComponent::ServerFire_Implementation(bool bPressed)
+void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// Multicast is invoked from the server, so the function will run on the server and all other clients.
-	MulticastFire(bPressed);
+	MulticastFire(TraceHitTarget);
 }
 
 // If this function is invoked from the client, then it will only run on the client which makes no sense.
 // If this function is invoked from the server, then it will run on the server and all the clients.
-void UCombatComponent::MulticastFire_Implementation(bool bPressed)
+void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	bFireButtonPressed = bPressed;
-	
 	if (!EquippedWeapon) return;
-	if (BlasterCharacter && bFireButtonPressed)
+	if (BlasterCharacter)
 	{
 		BlasterCharacter->PlayFireMontage(bAiming);
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		EquippedWeapon->Fire(HitResult.ImpactPoint);
+		EquippedWeapon->Fire(TraceHitTarget);
 	}
 }
 
@@ -142,8 +135,16 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
-	
-	ServerFire(bPressed);
+
+	if (bFireButtonPressed)
+	{
+		// We can't calculate the HitResult in the multicast, or the machine will use its own screen to calculate the HitResult, which is
+		// different from the owning actor's HitResult. So we should do the work by the actor who pressed the fire button, and transmit
+		// the result over the network.
+		FHitResult HitResult;
+		TraceUnderCrosshairs(HitResult);
+		ServerFire(HitResult.ImpactPoint);
+	}
 }
 
 /**
@@ -170,14 +171,9 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		FVector Start = CrosshairWorldLocation;
 		FVector End = CrosshairWorldLocation + CrosshairWorldDirection * TRACE_LENGTH;
 		GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECollisionChannel::ECC_Visibility);
-
 		if (!HitResult.bBlockingHit)
 		{
 			HitResult.ImpactPoint = End;
-		}
-		else
-		{
-			DrawDebugSphere(GetWorld(), HitResult.ImpactPoint, 12.f, 12, FColor::Red);
 		}
 	}
 }

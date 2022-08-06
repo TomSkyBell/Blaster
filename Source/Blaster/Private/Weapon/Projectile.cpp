@@ -11,14 +11,12 @@ AProjectile::AProjectile()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 
+	// The detailed config can be set in blueprint.
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
 	SetRootComponent(CollisionBox);
-	CollisionBox->SetCollisionObjectType(ECollisionChannel::ECC_WorldDynamic);
-	CollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
-	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldStatic, ECollisionResponse::ECR_Block);
 
+	// ProjectileMovementComponent updates the position of another component during its tick.
+	// If not SetUpdatedComponent(), then automatically set the root component as the updated component.
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 }
@@ -30,14 +28,14 @@ void AProjectile::BeginPlay()
 	// Spawn the particle effect when fire.
 	if (Tracer)
 	{
-		UGameplayStatics::SpawnEmitterAttached(
-			Tracer,
-			CollisionBox,
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition
-			);
+		TracerComponent = UGameplayStatics::SpawnEmitterAttached(
+							Tracer,
+							CollisionBox,
+							FName(),
+							GetActorLocation(),
+							GetActorRotation(),
+							EAttachLocation::KeepWorldPosition
+							);
 	}
 	
 }

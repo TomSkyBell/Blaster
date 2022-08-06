@@ -74,7 +74,7 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 	}
 }
 
-void AWeapon::Fire(const FVector& HitTarget)
+void AWeapon::Fire(const FVector& TraceHitTarget)
 {
 	if (FireAnimation && WeaponMesh)
 	{
