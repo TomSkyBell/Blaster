@@ -39,7 +39,12 @@ protected:
 	void TraceUnderCrosshairs(FHitResult& HitResult);
 
 private:
+	/**
+	 * Cross hair HUD and the player controller, player character
+	 */
 	class ABlasterCharacter* BlasterCharacter;
+	class ABlasterPlayerController* BlasterPlayerController;
+	class ABlasterHUD* BlasterHUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)
 	class AWeapon* EquippedWeapon;
@@ -65,4 +70,9 @@ private:
 	void FireButtonPressed(bool bPressed);
 
 	bool bFireButtonPressed;
+	
+	/**
+	* Set the cross hairs texture of the HUD from the weapon once the weapon is equipped.
+	*/
+	void SetHUDCrosshairs();
 };

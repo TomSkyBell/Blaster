@@ -6,8 +6,10 @@
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "HUD/BlasterHUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -23,16 +25,29 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
+	BlasterCharacter = Cast<ABlasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (BlasterCharacter)
 	{
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
+
+		// Instanced by casting.
+		BlasterPlayerController = Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+		if (BlasterPlayerController)
+		{
+			BlasterHUD = Cast<ABlasterHUD>(BlasterPlayerController->GetHUD());
+		}
 	}
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	
+	if (BlasterHUD)
+	{
+		BlasterHUD->DrawHUD();
+	}
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -62,6 +77,9 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
+
+	// Set the Cross hairs HUD
+	SetHUDCrosshairs();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -175,5 +193,21 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		{
 			HitResult.ImpactPoint = End;
 		}
+	}
+}
+
+void UCombatComponent::SetHUDCrosshairs()
+{
+	if (EquippedWeapon && BlasterHUD)
+	{
+		BlasterHUD->SetHUDPackage(
+			FHUDPackage(
+				EquippedWeapon->CrosshairsCenter,
+				EquippedWeapon->CrosshairsLeft,
+				EquippedWeapon->CrosshairsRight,
+				EquippedWeapon->CrosshairsTop,
+				EquippedWeapon->CrosshairsBottom
+			)
+		);
 	}
 }
