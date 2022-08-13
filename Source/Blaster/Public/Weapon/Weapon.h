@@ -78,7 +78,7 @@ public:
 	*/
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	class UTexture2D* CrosshairsCenter;
+	UTexture2D* CrosshairsCenter;
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsLeft;
@@ -91,4 +91,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	UTexture2D* CrosshairsBottom;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float CrosshairsMaxSpread;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float CrosshairsMinSpread;
 };

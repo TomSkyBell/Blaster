@@ -34,6 +34,8 @@ AWeapon::AWeapon()
 	PickupWidget->SetupAttachment(RootComponent);
 	PickupWidget->SetVisibility(false);
 
+	CrosshairsMaxSpread = 64.f;
+	CrosshairsMinSpread = 5.f;
 }
 
 void AWeapon::BeginPlay()

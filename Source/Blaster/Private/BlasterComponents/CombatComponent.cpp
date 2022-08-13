@@ -19,12 +19,17 @@ UCombatComponent::UCombatComponent()
 	AimWalkSpeed = 150.f;
 	BaseCrouchWalkSpeed = 300.f;
 	AimCrouchWalkSpeed = 150.f;
+
+	VelocityFactor = 0.f;
+	VelocityFactor_InterpSpeed = 4.f;
+	AirFactor = 0.f;
+	AirFactor_InterpSpeed = 4.f;
 }
 
 void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	BlasterCharacter = Cast<ABlasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
 	if (BlasterCharacter)
 	{
@@ -43,11 +48,8 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	
-	if (BlasterHUD)
-	{
-		BlasterHUD->DrawHUD();
-	}
+
+	SetCrosshairSpread(DeltaTime);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -153,7 +155,7 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
-
+	
 	if (bFireButtonPressed)
 	{
 		// We can't calculate the HitResult in the multicast, or the machine will use its own screen to calculate the HitResult, which is
@@ -206,8 +208,42 @@ void UCombatComponent::SetHUDCrosshairs()
 				EquippedWeapon->CrosshairsLeft,
 				EquippedWeapon->CrosshairsRight,
 				EquippedWeapon->CrosshairsTop,
-				EquippedWeapon->CrosshairsBottom
+				EquippedWeapon->CrosshairsBottom,
+				EquippedWeapon->CrosshairsMinSpread
 			)
 		);
 	}
 }
+
+void UCombatComponent::SetCrosshairSpread(float DeltaTime)
+{
+	if (!BlasterCharacter || !BlasterHUD || !EquippedWeapon) return;
+
+	// Interpolate the spread when the player is moving
+	if (BlasterCharacter->GetCharacterMovement()->GetCurrentAcceleration().Size() > 0.f)
+	{
+		VelocityFactor = FMath::FInterpTo(VelocityFactor, 1.f, DeltaTime, VelocityFactor_InterpSpeed);
+	}
+	else
+	{
+		VelocityFactor = FMath::FInterpTo(VelocityFactor, 0.f, DeltaTime, VelocityFactor_InterpSpeed);
+	}
+
+	// Interpolate the spread when the player is jumping
+	if (BlasterCharacter->GetCharacterMovement()->IsFalling())
+	{
+		AirFactor = FMath::FInterpTo(AirFactor, 1, DeltaTime, 1.f);
+	}
+	else
+	{
+		AirFactor = FMath::FInterpTo(AirFactor, 0, DeltaTime, AirFactor_InterpSpeed);
+	}
+	const float FinalFactor = VelocityFactor + AirFactor;
+	
+	// The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
+	BlasterHUD->SetHUDSpread(
+		FinalFactor * (EquippedWeapon->CrosshairsMaxSpread - EquippedWeapon->CrosshairsMinSpread) +
+		EquippedWeapon->CrosshairsMinSpread
+		);
+}
+

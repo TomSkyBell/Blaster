@@ -18,10 +18,11 @@ class BLASTER_API ABlasterHUD : public AHUD
 public:
 	virtual void DrawHUD() override;
 	FORCEINLINE void SetHUDPackage(FHUDPackage Package) { HUDPackage = Package; }
+	FORCEINLINE void SetHUDSpread(float Spread) { HUDPackage.CrosshairsCurrentSpread = Spread; }
 
 private:
 	FHUDPackage HUDPackage;
 	FVector2D ViewportCenter;
 
-	void DrawCrosshairs(UTexture2D* Texture);
+	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& Spread);
 };

@@ -7,12 +7,13 @@ struct FHUDPackage
 {
 	GENERATED_BODY()
 
-	FHUDPackage(UTexture2D* Center = nullptr, UTexture2D* Left = nullptr,UTexture2D* Right = nullptr ,UTexture2D* Top = nullptr ,UTexture2D* Bottom = nullptr):
-		CrosshairsCenter(Center), CrosshairsLeft(Left), CrosshairsRight(Right), CrosshairsTop(Top), CrosshairsBottom(Bottom) {}
+	FHUDPackage(UTexture2D* Center = nullptr, UTexture2D* Left = nullptr,UTexture2D* Right = nullptr ,UTexture2D* Top = nullptr ,UTexture2D* Bottom = nullptr, float Spread = 0.f):
+		CrosshairsCenter(Center), CrosshairsLeft(Left), CrosshairsRight(Right), CrosshairsTop(Top), CrosshairsBottom(Bottom), CrosshairsCurrentSpread(Spread) {}
 	
 	UTexture2D* CrosshairsCenter;
 	UTexture2D* CrosshairsLeft;
 	UTexture2D* CrosshairsRight;
 	UTexture2D* CrosshairsTop;
 	UTexture2D* CrosshairsBottom;
+	float CrosshairsCurrentSpread;
 };

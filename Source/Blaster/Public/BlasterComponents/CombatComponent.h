@@ -74,5 +74,15 @@ private:
 	/**
 	* Set the cross hairs texture of the HUD from the weapon once the weapon is equipped.
 	*/
+	void SetCrosshairSpread(float DeltaTime);
 	void SetHUDCrosshairs();
+	float VelocityFactor;
+	
+	UPROPERTY(EditAnywhere)
+	float VelocityFactor_InterpSpeed;
+	
+	float AirFactor;
+	
+	UPROPERTY(EditAnywhere)
+	float AirFactor_InterpSpeed;
 };

@@ -3,36 +3,32 @@
 
 #include "HUD/BlasterHUD.h"
 
+// The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
 void ABlasterHUD::DrawHUD()
 {
 	Super::DrawHUD();
 	
-	FVector2D ViewportSize;
 	if (GEngine && GEngine->GameViewport)
 	{
+		FVector2D ViewportSize;
 		GEngine->GameViewport->GetViewportSize(ViewportSize);
 		ViewportCenter = ViewportSize * .5f;
-		DrawCrosshairs(HUDPackage.CrosshairsCenter);
-		DrawCrosshairs(HUDPackage.CrosshairsLeft);
-		DrawCrosshairs(HUDPackage.CrosshairsRight);
-		DrawCrosshairs(HUDPackage.CrosshairsTop);
-		DrawCrosshairs(HUDPackage.CrosshairsBottom);
+		DrawCrosshairs(HUDPackage.CrosshairsCenter, FVector2D(0.f, 0.f));
+		DrawCrosshairs(HUDPackage.CrosshairsLeft, FVector2D(-HUDPackage.CrosshairsCurrentSpread, 0.f));
+		DrawCrosshairs(HUDPackage.CrosshairsRight, FVector2D(HUDPackage.CrosshairsCurrentSpread, 0.f));
+		DrawCrosshairs(HUDPackage.CrosshairsTop, FVector2D(0.f, -HUDPackage.CrosshairsCurrentSpread));
+		DrawCrosshairs(HUDPackage.CrosshairsBottom, FVector2D(0.f, HUDPackage.CrosshairsCurrentSpread));
 	}
 }
 
-void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture)
+void ABlasterHUD::DrawCrosshairs(UTexture2D* Texture, const FVector2D& Spread)
 {
 	if (!Texture) return;
-
-	// Texture is rendered at the top-left corner of the screen by default, so to put the texture in the center of the screen,
-	// we need to calculate the offset away from the top-left corner. offset_x = ViewportCenter.X - Texture->GetSizeX() * .5f,
-	// offset_y = ViewportCenter.Y - Texture->GetSizeY() * .5f
-	// Remember we don't need to calculate the cross hair's offset away from the center, because the cross hair's position is
-	// predefined in the texture.
+	
 	DrawTexture(
 		Texture,
-		ViewportCenter.X - Texture->GetSizeX() * .5f,
-		ViewportCenter.Y - Texture->GetSizeY() * .5f,
+		ViewportCenter.X - Texture->GetSizeX() * .5f + Spread.X,
+		ViewportCenter.Y - Texture->GetSizeY() * .5f + Spread.Y,
 		Texture->GetSizeX(),
 		Texture->GetSizeY(),
 		0.f,
