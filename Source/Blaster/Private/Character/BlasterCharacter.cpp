@@ -63,8 +63,10 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	AimOffset(DeltaTime);
-
+	
 	FABRIK_IK_LeftHand();
+
+	CorrectWeaponRotation();
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
@@ -137,6 +139,41 @@ void ABlasterCharacter::TurnInPlace(float DeltaTime)
 			LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		}
 	}
+}
+
+void ABlasterCharacter::FABRIK_IK_LeftHand()
+{
+	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh() && GetMesh())
+	{
+		// Get the socket transform in the world space
+		LeftHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
+		FVector OutPosition;
+		FRotator OutRotation;
+		// Transform the socket into the bone space ---- relative to the bone 'hand_r'
+		GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
+		LeftHandTransform.SetLocation(OutPosition);
+		LeftHandTransform.SetRotation(FQuat(OutRotation));
+	}
+}
+
+void ABlasterCharacter::CorrectWeaponRotation()
+{
+	if (!Combat || !Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
+
+	FHitResult HitResult;
+	Combat->TraceUnderCrosshairs(HitResult);
+
+	// // Draw the bullet trace line from the weapon, the Hit Target is natural, not the center of the screen (manually).
+	// const FTransform MuzzleTipTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
+	// const FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));
+	// DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.f, FColor::Red);
+	
+	// To adjust the hand rotation, to nearly match the two trace line, not precisely match. (This is a trick)
+	const FTransform RightHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
+	RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
+	
+	// // Draw the bullet trace line from the weapon, but the Hit Target is the center of the screen (manually).
+	// DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), HitResult.ImpactPoint, FColor::Blue);
 }
 
 
@@ -268,7 +305,7 @@ void ABlasterCharacter::FireButtonReleased()
 
 // =============================    Replication Work     ====================================//
 
-// RPC executed on the server, but server just does the work for the client instead.
+// RPC executed from the server, but server just does the work for the client instead.
 void ABlasterCharacter::ServerEquipButtonPressed_Implementation(AWeapon* Weapon)
 {
 	if (Combat)
@@ -338,20 +375,7 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-void ABlasterCharacter::FABRIK_IK_LeftHand()
-{
-	if (Combat && Combat->EquippedWeapon && Combat->EquippedWeapon->GetWeaponMesh() && GetMesh())
-	{
-		// Get the socket transform in the world space
-		LeftHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("LeftHandSocket"), ERelativeTransformSpace::RTS_World);
-		FVector OutPosition;
-		FRotator OutRotation;
-		// Transform the socket into the bone space ---- relative to the bone 'hand_r'
-		GetMesh()->TransformToBoneSpace(FName("hand_r"), LeftHandTransform.GetLocation(), FRotator::ZeroRotator, OutPosition, OutRotation);
-		LeftHandTransform.SetLocation(OutPosition);
-		LeftHandTransform.SetRotation(FQuat(OutRotation));
-	}
-}
+
 
 void ABlasterCharacter::PlayFireMontage(bool bAiming) const
 {

@@ -79,6 +79,9 @@ private:
 	FTransform LeftHandTransform;
 	void FABRIK_IK_LeftHand();
 
+	FRotator RightHandRotation;
+	void CorrectWeaponRotation();
+
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;
 
@@ -87,7 +90,8 @@ public:
 	bool IsAiming() const;
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
-	FORCEINLINE FTransform GetLeftHandTransform() { return LeftHandTransform; }
+	FORCEINLINE FTransform GetLeftHandTransform() const { return LeftHandTransform; }
+	FORCEINLINE FRotator GetRightHandRotation() const { return RightHandRotation; }
 	FORCEINLINE ETurningInPlace GetTuringInPlace() const { return TurningInPlace; }
 	bool IsFireButtonPressed() const;
 };

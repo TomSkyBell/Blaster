@@ -55,5 +55,7 @@
  	LeftHandTransform = BlasterCharacter->GetLeftHandTransform();
 
  	TurningInPlace = BlasterCharacter->GetTuringInPlace();
+
+ 	RightHandRotation = BlasterCharacter->GetRightHandRotation();
  }
 

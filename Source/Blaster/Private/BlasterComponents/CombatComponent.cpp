@@ -80,8 +80,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
 
-	// Set the Cross hairs HUD
-	SetHUDCrosshairs();
+	// // Set the Cross hairs HUD
+	// SetHUDCrosshairs();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
