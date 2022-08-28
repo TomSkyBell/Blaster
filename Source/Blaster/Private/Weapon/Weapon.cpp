@@ -78,6 +78,7 @@ void AWeapon::ShowPickupWidget(bool bShowWidget)
 
 void AWeapon::Fire(const FVector& TraceHitTarget)
 {
+	// This is common logic, feature can be added by override.
 	if (FireAnimation && WeaponMesh)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);

@@ -5,6 +5,7 @@
  #include "Character/BlasterCharacter.h"
  #include "GameFramework/CharacterMovementComponent.h"
  #include "Kismet/KismetMathLibrary.h"
+#include "Weapon/Weapon.h"
 
  void UBlasterAnimInstance::NativeInitializeAnimation()
  {
@@ -22,6 +23,9 @@
  		BlasterCharacter = Cast<ABlasterCharacter>(TryGetPawnOwner());
  	}
  	if (BlasterCharacter == nullptr) return;
+
+ 	if (BlasterCharacter->IsLocallyControlled()) bIsLocallyControlled = true;
+ 	else bIsLocallyControlled = false;
 
  	FVector Velocity = BlasterCharacter->GetVelocity();
  	Velocity.Z = 0.f;
@@ -57,5 +61,6 @@
  	TurningInPlace = BlasterCharacter->GetTuringInPlace();
 
  	RightHandRotation = BlasterCharacter->GetRightHandRotation();
+ 	
  }
 

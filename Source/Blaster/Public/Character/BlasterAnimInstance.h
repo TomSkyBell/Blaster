@@ -61,6 +61,12 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	FRotator RightHandRotation;
+
+	/**
+	 *	Because it's thread-unsafe to call BlasterCharacter->IsLocallyControlled in BP, we need to set the property in C++.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	bool bIsLocallyControlled;
 	
 	FRotator LastFrameLean;
 	FRotator NewFrameLean;

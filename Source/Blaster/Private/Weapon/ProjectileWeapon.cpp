@@ -11,13 +11,16 @@ void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 	// Common game logic (weapon functionality)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
 	Super::Fire(TraceHitTarget);
+	
+	// If we didn't declare HasAuthority(), the following will be done twice (first on the local machine, then on the local machine from the server
+	// like the copy of the server).
+	if (!HasAuthority()) return;
 
 	// Respective game logic (weapon functionality)
 	FireBullet(TraceHitTarget);
 	EjectBulletShell();
 
-	// Can't be tested on one machine, should be tested over the network.
-	if (!HasAuthority()) return;
+	
 }
 
 void AProjectileWeapon::FireBullet(const FVector& TraceHitTarget)

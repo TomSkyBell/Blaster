@@ -56,6 +56,7 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+	
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -158,22 +159,15 @@ void ABlasterCharacter::FABRIK_IK_LeftHand()
 
 void ABlasterCharacter::CorrectWeaponRotation()
 {
-	if (!Combat || !Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
-
+	// TraceUnderCorsshairs is a machine-related function, so the HitResult cannot be known by the other machine unless by RPC.
+	if (!Combat) return;
 	FHitResult HitResult;
 	Combat->TraceUnderCrosshairs(HitResult);
-
-	// // Draw the bullet trace line from the weapon, the Hit Target is natural, not the center of the screen (manually).
-	// const FTransform MuzzleTipTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("MuzzleFlash"), ERelativeTransformSpace::RTS_World);
-	// const FVector MuzzleX(FRotationMatrix(MuzzleTipTransform.GetRotation().Rotator()).GetUnitAxis(EAxis::X));
-	// DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), MuzzleTipTransform.GetLocation() + MuzzleX * 1000.f, FColor::Red);
 	
 	// To adjust the hand rotation, to nearly match the two trace line, not precisely match. (This is a trick)
+	if (!Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
 	const FTransform RightHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
 	RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
-	
-	// // Draw the bullet trace line from the weapon, but the Hit Target is the center of the screen (manually).
-	// DrawDebugLine(GetWorld(), MuzzleTipTransform.GetLocation(), HitResult.ImpactPoint, FColor::Blue);
 }
 
 
@@ -250,7 +244,7 @@ void ABlasterCharacter::EquipButtonPressed()
 		else
 		{
 			// RPC called from the client
-			ServerEquipButtonPressed(OverlappingWeapon);
+			ServerEquipButtonPressed();
 		}
 	}
 }
@@ -306,11 +300,11 @@ void ABlasterCharacter::FireButtonReleased()
 // =============================    Replication Work     ====================================//
 
 // RPC executed from the server, but server just does the work for the client instead.
-void ABlasterCharacter::ServerEquipButtonPressed_Implementation(AWeapon* Weapon)
+void ABlasterCharacter::ServerEquipButtonPressed_Implementation()
 {
 	if (Combat)
 	{
-		Combat->EquipWeapon(Weapon);
+		Combat->EquipWeapon(OverlappingWeapon);
 	}
 }
 
@@ -320,6 +314,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	// If OverlappingWeapon is replicated, then it'll be only effect on the owner so that the players will not interfere with each other 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	
 }
 
 void ABlasterCharacter::PostInitializeComponents()

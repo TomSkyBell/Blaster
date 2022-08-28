@@ -30,18 +30,11 @@ void UCombatComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	BlasterCharacter = Cast<ABlasterCharacter>(UGameplayStatics::GetPlayerCharacter(this, 0));
+	// BlasterCharacter is initialized in BlasterCharacter.cpp, PostInitializeComponents() function.
 	if (BlasterCharacter)
 	{
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
-
-		// Instanced by casting.
-		BlasterPlayerController = Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
-		if (BlasterPlayerController)
-		{
-			BlasterHUD = Cast<ABlasterHUD>(BlasterPlayerController->GetHUD());
-		}
 	}
 }
 
@@ -49,6 +42,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	SetHUDCrosshairs();
 	SetCrosshairSpread(DeltaTime);
 }
 
@@ -71,7 +65,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket"));
 	if (HandSocket)
 	{
-		// Automatically propagated to the clients
+		// Automatically propagated to the clients, that's why we don't need to do attachment on the client again.
 		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
 	}
 	// Set the owner of this Actor, used primarily for network replication. 
@@ -80,7 +74,10 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
 
-	// // Set the Cross hairs HUD
+	// It's ideal and easy to think of setting the cross hair hud once we equip the weapon, but we need to take care that
+	// this functionality is implemented on the server and the server cannot get the client's hud since the client's remote
+	// role is autonomous proxy and it's not allowed. (Other side, it makes sense, right? We cannot set the hud remotely from
+	// another machine.) That's why we finally choose to put the functionality into the tick part.
 	// SetHUDCrosshairs();
 }
 
@@ -142,12 +139,11 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 // If this function is invoked from the server, then it will run on the server and all the clients.
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	if (!EquippedWeapon) return;
-	if (BlasterCharacter)
-	{
-		BlasterCharacter->PlayFireMontage(bAiming);
-		EquippedWeapon->Fire(TraceHitTarget);
-	}
+	if (!BlasterCharacter || !EquippedWeapon) return;
+
+	BlasterCharacter->PlayFireMontage(bAiming);
+	EquippedWeapon->Fire(TraceHitTarget);
+	
 }
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
@@ -166,6 +162,8 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 		ServerFire(HitResult.ImpactPoint);
 	}
 }
+
+
 
 /**
  * Project a line trace from the center of the screen to the target.
@@ -200,7 +198,19 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 
 void UCombatComponent::SetHUDCrosshairs()
 {
-	if (EquippedWeapon && BlasterHUD)
+	if (!BlasterCharacter) return;
+	if (!BlasterCharacter->Controller) return;
+	
+	// Instanced by casting.
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+	if (!BlasterPlayerController) return;
+
+	// If a client is on a machine, and its remote role is autonomous proxy, then the server cannot get its hud. (The server cannot get hud from
+	// an autonomous proxy). Besides, it makes sense that the hud can only be display/owned by the local machine and can't be transmitted.
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(BlasterPlayerController->GetHUD());
+	if (BlasterHUD == nullptr) return;
+
+	if (EquippedWeapon)
 	{
 		BlasterHUD->SetHUDPackage(
 			FHUDPackage(
@@ -211,6 +221,13 @@ void UCombatComponent::SetHUDCrosshairs()
 				EquippedWeapon->CrosshairsBottom,
 				EquippedWeapon->CrosshairsMinSpread
 			)
+		);
+	}
+	// In cases that we change a weapon, we need to refresh first.
+	else
+	{
+		BlasterHUD->SetHUDPackage(
+			FHUDPackage( nullptr, nullptr, nullptr, nullptr, nullptr, 0.f)
 		);
 	}
 }

@@ -68,11 +68,11 @@ private:
 	float AimCrouchWalkSpeed;
 
 	void FireButtonPressed(bool bPressed);
-
 	bool bFireButtonPressed;
 	
 	/**
 	* Set the cross hairs texture of the HUD from the weapon once the weapon is equipped.
+	* Set cross hair functions should be locally controlled, it shouldn't be rendered on other machines.
 	*/
 	void SetCrosshairSpread(float DeltaTime);
 	void SetHUDCrosshairs();

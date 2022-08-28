@@ -66,7 +66,7 @@ private:
 	class UCombatComponent* Combat;
 
 	UFUNCTION(Server, Reliable)
-	void ServerEquipButtonPressed(AWeapon* Weapon);
+	void ServerEquipButtonPressed();
 
 	FRotator LastAimRotation;
 	float AO_Yaw, Interp_AO_Yaw;
@@ -78,7 +78,7 @@ private:
 	
 	FTransform LeftHandTransform;
 	void FABRIK_IK_LeftHand();
-
+	
 	FRotator RightHandRotation;
 	void CorrectWeaponRotation();
 
