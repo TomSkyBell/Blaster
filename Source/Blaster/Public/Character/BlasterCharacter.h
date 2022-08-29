@@ -86,6 +86,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;
 
+	/**
+	 *	Set a threshold between camera and the character to avoid blocking.
+	 */
+	UPROPERTY(EditAnywhere, Category = Camera)
+	float CameraThreshold = 200.f;
+
+	/**
+	 *	Check if camera is too close with the character, if so, hide the character to avoid blocking the vision.
+	 */
+	void HideCharacterIfClose();
+
 public:
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;

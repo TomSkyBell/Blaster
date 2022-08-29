@@ -69,6 +69,8 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	FABRIK_IK_LeftHand();
 
 	CorrectWeaponRotation(DeltaTime);
+
+	HideCharacterIfClose();
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
@@ -170,6 +172,17 @@ void ABlasterCharacter::CorrectWeaponRotation(float DeltaTime)
 	const FTransform RightHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
 	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
 	RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 20.f);
+}
+
+void ABlasterCharacter::HideCharacterIfClose()
+{
+	if (!IsLocallyControlled()) return;
+	if (!FollowCamera || !GetMesh()) return;
+	if (!Combat || !Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
+	
+	const bool bHideCharacter = ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold);
+	GetMesh()->SetVisibility(!bHideCharacter);
+	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideCharacter);
 }
 
 
