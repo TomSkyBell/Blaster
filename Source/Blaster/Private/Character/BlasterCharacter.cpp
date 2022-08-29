@@ -44,6 +44,7 @@ ABlasterCharacter::ABlasterCharacter()
 	// Avoid the zooming effect (camera overlaps with the character)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 
@@ -67,7 +68,7 @@ void ABlasterCharacter::Tick(float DeltaTime)
 	
 	FABRIK_IK_LeftHand();
 
-	CorrectWeaponRotation();
+	CorrectWeaponRotation(DeltaTime);
 }
 
 void ABlasterCharacter::AimOffset(float DeltaTime)
@@ -157,7 +158,7 @@ void ABlasterCharacter::FABRIK_IK_LeftHand()
 	}
 }
 
-void ABlasterCharacter::CorrectWeaponRotation()
+void ABlasterCharacter::CorrectWeaponRotation(float DeltaTime)
 {
 	// TraceUnderCorsshairs is a machine-related function, so the HitResult cannot be known by the other machine unless by RPC.
 	if (!Combat) return;
@@ -167,7 +168,8 @@ void ABlasterCharacter::CorrectWeaponRotation()
 	// To adjust the hand rotation, to nearly match the two trace line, not precisely match. (This is a trick)
 	if (!Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
 	const FTransform RightHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
-	RightHandRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
+	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
+	RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 20.f);
 }
 
 

@@ -16,16 +16,7 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
-	BaseWalkSpeed = 600.f;
-	AimWalkSpeed = 150.f;
-	BaseCrouchWalkSpeed = 300.f;
-	AimCrouchWalkSpeed = 150.f;
-
-	VelocityFactor = 0.f;
-	VelocityFactor_InterpSpeed = 4.f;
-	AirFactor = 0.f;
-	AirFactor_InterpSpeed = 4.f;
+	
 }
 
 void UCombatComponent::BeginPlay()
@@ -39,6 +30,7 @@ void UCombatComponent::BeginPlay()
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
 		DefaultFOV = BlasterCharacter->GetFollowCamera()->FieldOfView;
 		InterpFOV = DefaultFOV;
+		if (EquippedWeapon) CrosshairSpread = EquippedWeapon->CrosshairsMinSpread;
 	}
 }
 
@@ -46,8 +38,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	SetHUDCrosshairs();
-	SetCrosshairSpread(DeltaTime);
+	UpdateHUDCrosshairs(DeltaTime);
 	AimZooming(DeltaTime);
 }
 
@@ -177,6 +168,9 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
  */
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 {
+	// 'TraceUnderCrosshair' is a machine-related function, so it shouldn't be called by another machine.
+	if (!BlasterCharacter || !BlasterCharacter->IsLocallyControlled()) return;
+	
 	FVector2D ViewportSize;
 	if (GEngine && GEngine->GameViewport)
 	{
@@ -200,12 +194,21 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		{
 			HitResult.ImpactPoint = End;
 		}
+		if (HitResult.GetActor())
+		{
+			const bool bIsImplemented = HitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>();
+			CrosshairColor = bIsImplemented ? FColor::Red : FColor::White;
+		}
+		else
+		{
+			CrosshairColor = FColor::White;
+		}
 	}
 }
 
-void UCombatComponent::SetHUDCrosshairs()
+void UCombatComponent::UpdateHUDCrosshairs(float DeltaTime)
 {
-	if (!BlasterCharacter) return;
+	if (!BlasterCharacter || !BlasterCharacter->IsLocallyControlled()) return;
 	if (!BlasterCharacter->Controller) return;
 	
 	// Instanced by casting.
@@ -215,31 +218,13 @@ void UCombatComponent::SetHUDCrosshairs()
 	// If a client is on a machine, and its remote role is autonomous proxy, then the server cannot get its hud. (The server cannot get hud from
 	// an autonomous proxy). Besides, it makes sense that the hud can only be display/owned by the local machine and can't be transmitted.
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(BlasterPlayerController->GetHUD());
-	if (BlasterHUD == nullptr) return;
 
-	if (EquippedWeapon)
-	{
-		BlasterHUD->SetHUDPackage(
-			FHUDPackage(
-				EquippedWeapon->CrosshairsCenter,
-				EquippedWeapon->CrosshairsLeft,
-				EquippedWeapon->CrosshairsRight,
-				EquippedWeapon->CrosshairsTop,
-				EquippedWeapon->CrosshairsBottom,
-				EquippedWeapon->CrosshairsMinSpread
-			)
-		);
-	}
-	// In cases that we change a weapon, we need to refresh first.
-	else
-	{
-		BlasterHUD->SetHUDPackage(
-			FHUDPackage( nullptr, nullptr, nullptr, nullptr, nullptr, 0.f)
-		);
-	}
+	UpdateCrosshairSpread(DeltaTime);
+	SetHUDPackage();
+	
 }
 
-void UCombatComponent::SetCrosshairSpread(float DeltaTime)
+void UCombatComponent::UpdateCrosshairSpread(float DeltaTime)
 {
 	if (!BlasterCharacter || !BlasterHUD || !EquippedWeapon) return;
 
@@ -273,11 +258,38 @@ void UCombatComponent::SetCrosshairSpread(float DeltaTime)
 	const float FinalFactor = VelocityFactor + AirFactor;
 	
 	// The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
-	BlasterHUD->SetHUDSpread(
+	CrosshairSpread = 
 		FinalFactor * (EquippedWeapon->CrosshairsMaxSpread - EquippedWeapon->CrosshairsMinSpread) +
-		AimFactor * EquippedWeapon->CrosshairsMinSpread
-		);
+		AimFactor * EquippedWeapon->CrosshairsMinSpread;
 }
+
+void UCombatComponent::SetHUDPackage()
+{
+	if (BlasterHUD == nullptr) return;
+
+	if (EquippedWeapon)
+	{
+		BlasterHUD->SetHUDPackage(
+			FHUDPackage(
+				EquippedWeapon->CrosshairsCenter,
+				EquippedWeapon->CrosshairsLeft,
+				EquippedWeapon->CrosshairsRight,
+				EquippedWeapon->CrosshairsTop,
+				EquippedWeapon->CrosshairsBottom,
+				CrosshairSpread,
+				CrosshairColor
+			)
+		);
+	}
+	// In cases that we change a weapon, we need to refresh first.
+	else
+	{
+		BlasterHUD->SetHUDPackage(
+			FHUDPackage( nullptr, nullptr, nullptr, nullptr, nullptr, 0.f)
+		);
+	}
+}
+
 
 void UCombatComponent::AimZooming(float DeltaTime)
 {

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "BlasterTypes/HUDPackage.h"
+#include "Datasmith/DatasmithCore/Public/DatasmithDefinitions.h"
 #include "GameFramework/HUD.h"
 #include "BlasterHUD.generated.h"
 
@@ -19,7 +20,7 @@ public:
 	virtual void DrawHUD() override;
 	FORCEINLINE void SetHUDPackage(FHUDPackage Package) { HUDPackage = Package; }
 	FORCEINLINE void SetHUDSpread(float Spread) { HUDPackage.CrosshairsCurrentSpread = Spread; }
-
+	
 private:
 	FHUDPackage HUDPackage;
 	FVector2D ViewportCenter;
