@@ -2,6 +2,8 @@
 
 
 #include "BlasterComponents/CombatComponent.h"
+
+#include "Camera/CameraComponent.h"
 #include "Weapon/Weapon.h"
 #include "Character/BlasterCharacter.h"
 #include "Engine/SkeletalMeshSocket.h"
@@ -35,15 +37,18 @@ void UCombatComponent::BeginPlay()
 	{
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
+		DefaultFOV = BlasterCharacter->GetFollowCamera()->FieldOfView;
+		InterpFOV = DefaultFOV;
 	}
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
+	
 	SetHUDCrosshairs();
 	SetCrosshairSpread(DeltaTime);
+	AimZooming(DeltaTime);
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -263,4 +268,20 @@ void UCombatComponent::SetCrosshairSpread(float DeltaTime)
 		EquippedWeapon->CrosshairsMinSpread
 		);
 }
+
+void UCombatComponent::AimZooming(float DeltaTime)
+{
+	if (!BlasterCharacter || !EquippedWeapon || !BlasterCharacter->IsLocallyControlled()) return;
+	
+	if (bAiming)
+	{
+		InterpFOV = FMath::FInterpTo(InterpFOV, EquippedWeapon->GetAim_FOV(), DeltaTime, EquippedWeapon->GetZoomInSpeed());
+	}
+	else
+	{
+		InterpFOV = FMath::FInterpTo(InterpFOV, DefaultFOV, DeltaTime, DefaultZoomOutSpeed);
+	}
+	BlasterCharacter->GetFollowCamera()->FieldOfView = InterpFOV;
+}
+
 

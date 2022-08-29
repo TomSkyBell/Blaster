@@ -94,4 +94,5 @@ public:
 	FORCEINLINE FRotator GetRightHandRotation() const { return RightHandRotation; }
 	FORCEINLINE ETurningInPlace GetTuringInPlace() const { return TurningInPlace; }
 	bool IsFireButtonPressed() const;
+	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 };

@@ -68,10 +68,25 @@ private:
 	UPROPERTY(EditAnywhere, Category = Weapon)
 	class UAnimationAsset* FireAnimation;
 
+	/**
+	 *	Change camera's FOV when aim zooming
+	 */
+	UPROPERTY(EditAnywhere)
+	float Aim_FOV;
+
+	UPROPERTY(EditAnywhere)
+	float ZoomInSpeed;
+
+	UPROPERTY(EditAnywhere)
+	float ZoomOutSpeed;
+
 public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
+	FORCEINLINE float GetAim_FOV() const { return Aim_FOV; }
+	FORCEINLINE float GetZoomInSpeed() const { return ZoomInSpeed; }
+	FORCEINLINE float GetZoomOutSpeed() const { return ZoomOutSpeed; }
 
 	/**
 	* Textures for the weapon cross hairs

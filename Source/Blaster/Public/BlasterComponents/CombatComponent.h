@@ -76,6 +76,7 @@ private:
 	*/
 	void SetCrosshairSpread(float DeltaTime);
 	void SetHUDCrosshairs();
+	
 	float VelocityFactor;
 	
 	UPROPERTY(EditAnywhere)
@@ -85,4 +86,14 @@ private:
 	
 	UPROPERTY(EditAnywhere)
 	float AirFactor_InterpSpeed;
+
+	/**
+	 *	Interpolate the speed of the change of FOV when aiming.
+	 */
+	void AimZooming(float DeltaTime);
+	float DefaultFOV;
+	float InterpFOV;
+
+	UPROPERTY(EditAnywhere)
+	float DefaultZoomOutSpeed;
 };
