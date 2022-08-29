@@ -156,16 +156,18 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
+
+	if (!bFireButtonPressed || !EquippedWeapon) return;
+
+	AimFactor += EquippedWeapon->GetRecoilFactor();
+
+	// We can't calculate the HitResult in the multicast, or the machine will use its own screen to calculate the HitResult, which is
+	// different from the owning actor's HitResult. So we should do the work by the actor who pressed the fire button, and transmit
+	// the result over the network.
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
+	ServerFire(HitResult.ImpactPoint);
 	
-	if (bFireButtonPressed)
-	{
-		// We can't calculate the HitResult in the multicast, or the machine will use its own screen to calculate the HitResult, which is
-		// different from the owning actor's HitResult. So we should do the work by the actor who pressed the fire button, and transmit
-		// the result over the network.
-		FHitResult HitResult;
-		TraceUnderCrosshairs(HitResult);
-		ServerFire(HitResult.ImpactPoint);
-	}
 }
 
 
@@ -260,12 +262,20 @@ void UCombatComponent::SetCrosshairSpread(float DeltaTime)
 	{
 		AirFactor = FMath::FInterpTo(AirFactor, 0, DeltaTime, AirFactor_InterpSpeed);
 	}
+	if (bAiming)
+	{
+		AimFactor = FMath::FInterpTo(AimFactor, EquippedWeapon->GetAimAccuracy(), DeltaTime, AimFactor_InterpSpeed);
+	}
+	else
+	{
+		AimFactor = FMath::FInterpTo(AimFactor, 1.f, DeltaTime, AimFactor_InterpSpeed);
+	}
 	const float FinalFactor = VelocityFactor + AirFactor;
 	
 	// The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
 	BlasterHUD->SetHUDSpread(
 		FinalFactor * (EquippedWeapon->CrosshairsMaxSpread - EquippedWeapon->CrosshairsMinSpread) +
-		EquippedWeapon->CrosshairsMinSpread
+		AimFactor * EquippedWeapon->CrosshairsMinSpread
 		);
 }
 

@@ -55,16 +55,16 @@ private:
 	UPROPERTY(Replicated)
 	bool bAiming;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float BaseWalkSpeed;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float AimWalkSpeed;
 	
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float BaseCrouchWalkSpeed;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Movement)
 	float AimCrouchWalkSpeed;
 
 	void FireButtonPressed(bool bPressed);
@@ -79,13 +79,18 @@ private:
 	
 	float VelocityFactor;
 	
-	UPROPERTY(EditAnywhere)
-	float VelocityFactor_InterpSpeed;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float VelocityFactor_InterpSpeed = 4.f;
 	
 	float AirFactor;
 	
-	UPROPERTY(EditAnywhere)
-	float AirFactor_InterpSpeed;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float AirFactor_InterpSpeed = 4.f;
+
+	float AimFactor = 1.f;
+	
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float AimFactor_InterpSpeed = 10.f;
 
 	/**
 	 *	Interpolate the speed of the change of FOV when aiming.
@@ -94,6 +99,6 @@ private:
 	float DefaultFOV;
 	float InterpFOV;
 
-	UPROPERTY(EditAnywhere)
-	float DefaultZoomOutSpeed;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float DefaultZoomOutSpeed = 10.f;
 };

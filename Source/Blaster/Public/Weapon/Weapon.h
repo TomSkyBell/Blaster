@@ -71,14 +71,23 @@ private:
 	/**
 	 *	Change camera's FOV when aim zooming
 	 */
-	UPROPERTY(EditAnywhere)
-	float Aim_FOV;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float Aim_FOV = 45.f;
 
-	UPROPERTY(EditAnywhere)
-	float ZoomInSpeed;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float ZoomInSpeed = 20.f;
 
-	UPROPERTY(EditAnywhere)
-	float ZoomOutSpeed;
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float ZoomOutSpeed = 0.f;
+
+	/**
+	 *	Weapon's cross hair's spread when zooming and shooting
+	 */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float AimAccuracy = .1f;
+
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float RecoilFactor = .75f;
 
 public:
 	void SetWeaponState(EWeaponState State);
@@ -87,6 +96,8 @@ public:
 	FORCEINLINE float GetAim_FOV() const { return Aim_FOV; }
 	FORCEINLINE float GetZoomInSpeed() const { return ZoomInSpeed; }
 	FORCEINLINE float GetZoomOutSpeed() const { return ZoomOutSpeed; }
+	FORCEINLINE float GetAimAccuracy() const { return AimAccuracy; }
+	FORCEINLINE float GetRecoilFactor() const { return RecoilFactor; }
 
 	/**
 	* Textures for the weapon cross hairs
