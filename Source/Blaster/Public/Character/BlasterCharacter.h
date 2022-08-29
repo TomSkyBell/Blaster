@@ -5,12 +5,13 @@
 #include "CoreMinimal.h"
 #include "BlasterTypes/TurningInPlace.h"
 #include "GameFramework/Character.h"
+#include "Interface/InteractWithCrosshairsInterface.h"
 #include "BlasterCharacter.generated.h"
 
 
 
 UCLASS()
-class BLASTER_API ABlasterCharacter : public ACharacter
+class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
 	GENERATED_BODY()
 
@@ -80,7 +81,7 @@ private:
 	void FABRIK_IK_LeftHand();
 	
 	FRotator RightHandRotation;
-	void CorrectWeaponRotation();
+	void CorrectWeaponRotation(float DeltaTime);
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	class UAnimMontage* FireWeaponMontage;

@@ -56,16 +56,16 @@ private:
 	bool bAiming;
 
 	UPROPERTY(EditAnywhere, Category = Movement)
-	float BaseWalkSpeed;
+	float BaseWalkSpeed = 600.f;
 
 	UPROPERTY(EditAnywhere, Category = Movement)
-	float AimWalkSpeed;
+	float AimWalkSpeed = 150.f;
 	
 	UPROPERTY(EditAnywhere, Category = Movement)
-	float BaseCrouchWalkSpeed;
+	float BaseCrouchWalkSpeed = 300.f;
 
 	UPROPERTY(EditAnywhere, Category = Movement)
-	float AimCrouchWalkSpeed;
+	float AimCrouchWalkSpeed = 150.f;
 
 	void FireButtonPressed(bool bPressed);
 	bool bFireButtonPressed;
@@ -74,15 +74,15 @@ private:
 	* Set the cross hairs texture of the HUD from the weapon once the weapon is equipped.
 	* Set cross hair functions should be locally controlled, it shouldn't be rendered on other machines.
 	*/
-	void SetCrosshairSpread(float DeltaTime);
-	void SetHUDCrosshairs();
+	void UpdateCrosshairSpread(float DeltaTime);
+	void UpdateHUDCrosshairs(float DeltaTime);
 	
-	float VelocityFactor;
+	float VelocityFactor = 0.f;
 	
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float VelocityFactor_InterpSpeed = 4.f;
 	
-	float AirFactor;
+	float AirFactor = 0.f;
 	
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float AirFactor_InterpSpeed = 4.f;
@@ -101,4 +101,14 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float DefaultZoomOutSpeed = 10.f;
+
+	/**
+	 *
+	 */
+	float CrosshairSpread;
+	
+	/**
+	 *	Change the cross hair's color when aiming at the enemy
+	 */
+	FColor CrosshairColor = FColor::White;
 };

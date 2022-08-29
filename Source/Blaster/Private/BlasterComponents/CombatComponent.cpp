@@ -16,16 +16,7 @@
 UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
-
-	BaseWalkSpeed = 600.f;
-	AimWalkSpeed = 150.f;
-	BaseCrouchWalkSpeed = 300.f;
-	AimCrouchWalkSpeed = 150.f;
-
-	VelocityFactor = 0.f;
-	VelocityFactor_InterpSpeed = 4.f;
-	AirFactor = 0.f;
-	AirFactor_InterpSpeed = 4.f;
+	
 }
 
 void UCombatComponent::BeginPlay()
@@ -39,6 +30,7 @@ void UCombatComponent::BeginPlay()
 		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
 		DefaultFOV = BlasterCharacter->GetFollowCamera()->FieldOfView;
 		InterpFOV = DefaultFOV;
+		if (EquippedWeapon) CrosshairSpread = EquippedWeapon->CrosshairsMinSpread;
 	}
 }
 
@@ -46,8 +38,7 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActo
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
-	SetHUDCrosshairs();
-	SetCrosshairSpread(DeltaTime);
+	UpdateHUDCrosshairs(DeltaTime);
 	AimZooming(DeltaTime);
 }
 
@@ -177,6 +168,9 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
  */
 void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 {
+	// 'TraceUnderCrosshair' is a machine-related function, so it shouldn't be called by another machine.
+	if (!BlasterCharacter || !BlasterCharacter->IsLocallyControlled()) return;
+	
 	FVector2D ViewportSize;
 	if (GEngine && GEngine->GameViewport)
 	{
@@ -200,10 +194,19 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 		{
 			HitResult.ImpactPoint = End;
 		}
+		if (HitResult.GetActor())
+		{
+			const bool bIsImplemented = HitResult.GetActor()->Implements<UInteractWithCrosshairsInterface>();
+			CrosshairColor = bIsImplemented ? FColor::Red : FColor::White;
+		}
+		else
+		{
+			CrosshairColor = FColor::White;
+		}
 	}
 }
 
-void UCombatComponent::SetHUDCrosshairs()
+void UCombatComponent::UpdateHUDCrosshairs(float DeltaTime)
 {
 	if (!BlasterCharacter) return;
 	if (!BlasterCharacter->Controller) return;
@@ -217,6 +220,8 @@ void UCombatComponent::SetHUDCrosshairs()
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(BlasterPlayerController->GetHUD());
 	if (BlasterHUD == nullptr) return;
 
+	UpdateCrosshairSpread(DeltaTime);
+	
 	if (EquippedWeapon)
 	{
 		BlasterHUD->SetHUDPackage(
@@ -226,7 +231,8 @@ void UCombatComponent::SetHUDCrosshairs()
 				EquippedWeapon->CrosshairsRight,
 				EquippedWeapon->CrosshairsTop,
 				EquippedWeapon->CrosshairsBottom,
-				EquippedWeapon->CrosshairsMinSpread
+				CrosshairSpread,
+				CrosshairColor
 			)
 		);
 	}
@@ -239,7 +245,7 @@ void UCombatComponent::SetHUDCrosshairs()
 	}
 }
 
-void UCombatComponent::SetCrosshairSpread(float DeltaTime)
+void UCombatComponent::UpdateCrosshairSpread(float DeltaTime)
 {
 	if (!BlasterCharacter || !BlasterHUD || !EquippedWeapon) return;
 
@@ -273,10 +279,9 @@ void UCombatComponent::SetCrosshairSpread(float DeltaTime)
 	const float FinalFactor = VelocityFactor + AirFactor;
 	
 	// The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
-	BlasterHUD->SetHUDSpread(
+	CrosshairSpread = 
 		FinalFactor * (EquippedWeapon->CrosshairsMaxSpread - EquippedWeapon->CrosshairsMinSpread) +
-		AimFactor * EquippedWeapon->CrosshairsMinSpread
-		);
+		AimFactor * EquippedWeapon->CrosshairsMinSpread;
 }
 
 void UCombatComponent::AimZooming(float DeltaTime)
