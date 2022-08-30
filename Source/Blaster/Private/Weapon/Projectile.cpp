@@ -2,9 +2,12 @@
 
 
 #include "Weapon/Projectile.h"
+
+#include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blaster/Blaster.h"
 
 AProjectile::AProjectile()
 {
@@ -14,6 +17,9 @@ AProjectile::AProjectile()
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
 	SetRootComponent(CollisionBox);
 	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
 
 	// ProjectileMovementComponent updates the position of another component during its tick.
 	// If not SetUpdatedComponent(), then automatically set the root component as the updated component.
@@ -54,6 +60,9 @@ void AProjectile::BeginPlay()
 	}
 }
 
+// We gonna make the OnHit function a server-controlled function, just like overlap function. See, on the client end, once OnHit triggered,
+// we cannot see the server's playing montage cuz the client cannot control the server to play montage. So why don't we directly put the
+// logic on the server and use a multi-RPC to wait for the multicast result from the server.
 void AProjectile::OnHit(
 	UPrimitiveComponent* HitComponent,
 	AActor* OtherActor,
@@ -62,6 +71,15 @@ void AProjectile::OnHit(
 	const FHitResult& Hit
 	)
 {
+	// Make sure the OnHit logic is only implemented on the server to do the NetMulticast.
+	if (!HasAuthority()) return;
+	
+	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
+	{
+		// NetMulticast functionality.
+		BlasterCharacter->PlayHitReactMontage();
+	}
+	
 	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
 	// Compared to MulticastRPC, this way can lower the bandwidth.
 	Destroy();

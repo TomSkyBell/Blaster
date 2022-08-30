@@ -41,6 +41,9 @@ private:
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
 	void PlayFireMontage(bool bAiming) const;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void PlayHitReactMontage() const;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -83,8 +86,14 @@ private:
 	FRotator RightHandRotation;
 	void CorrectWeaponRotation(float DeltaTime);
 
+	/**
+	 *	Animation Montage
+	 */
 	UPROPERTY(EditAnywhere, Category = Combat)
-	class UAnimMontage* FireWeaponMontage;
+	UAnimMontage* FireWeaponMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* HitReactMontage;
 
 	/**
 	 *	Set a threshold between camera and the character to avoid blocking.
