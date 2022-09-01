@@ -2,12 +2,12 @@
 
 
 #include "Weapon/Projectile.h"
-
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/Blaster.h"
+#include "Net/UnrealNetwork.h"
 
 AProjectile::AProjectile()
 {
@@ -71,14 +71,13 @@ void AProjectile::OnHit(
 	const FHitResult& Hit
 	)
 {
-	// Make sure the OnHit logic is only implemented on the server to do the NetMulticast.
-	if (!HasAuthority()) return;
-	
 	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
 	{
-		// NetMulticast functionality.
+		// NetMulticast the hit react montage.
 		BlasterCharacter->PlayHitReactMontage();
 	}
+	// Multicast the hit impact.
+	MulticastHitImpact(OtherActor);
 	
 	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
 	// Compared to MulticastRPC, this way can lower the bandwidth.
@@ -89,20 +88,31 @@ void AProjectile::Destroyed()
 {
 	Super::Destroyed();
 	
-	if (HitEffect)
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(this, HitEffect, GetActorLocation());
-	}
-	if (HitSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(this, HitSound, GetActorLocation());
-	}
 }
-
 
 void AProjectile::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
+
+void AProjectile::MulticastHitImpact_Implementation(AActor* OtherActor)
+{
+	if (Cast<ABlasterCharacter>(OtherActor))
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffectForPawn, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSoundForPawn, GetActorLocation());
+	}
+	else
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffectForStone, GetActorLocation());
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSoundForStone, GetActorLocation());
+	}
 }
 

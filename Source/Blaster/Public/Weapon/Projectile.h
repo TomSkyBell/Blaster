@@ -30,6 +30,7 @@ protected:
 
 public:	
 	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 private:
 	UPROPERTY(EditAnywhere)
@@ -40,11 +41,20 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* Tracer;
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastHitImpact(AActor* OtherActor);
+	
+	UPROPERTY(EditAnywhere)
+	class UParticleSystem* HitEffectForPawn;
 
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* HitEffect;
+	class UParticleSystem* HitEffectForStone;
+	
+	UPROPERTY(EditAnywhere)
+	class USoundBase* HitSoundForPawn;
 
 	UPROPERTY(EditAnywhere)
-	class USoundBase* HitSound;
+	class USoundBase* HitSoundForStone;
 
 };
