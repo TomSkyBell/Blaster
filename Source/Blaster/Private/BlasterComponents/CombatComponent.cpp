@@ -2,7 +2,6 @@
 
 
 #include "BlasterComponents/CombatComponent.h"
-
 #include "Camera/CameraComponent.h"
 #include "Weapon/Weapon.h"
 #include "Character/BlasterCharacter.h"
@@ -37,9 +36,13 @@ void UCombatComponent::BeginPlay()
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	FHitResult HitResult;
+	TraceUnderCrosshairs(HitResult);
 	
 	UpdateHUDCrosshairs(DeltaTime);
 	AimZooming(DeltaTime);
+	
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -50,6 +53,15 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(UCombatComponent, bAiming);
 }
 
+void UCombatComponent::SetWeaponRelatedProperties()
+{
+	if (!EquippedWeapon) return;
+	
+	// If the new weapon has the mode we got, then do nothing, else we change the fire mode.
+	if (bAutomaticFire && !EquippedWeapon->GetCanAutoFire() ||
+		!bAutomaticFire && !EquippedWeapon->GetCanSemiAutoFire())
+	bAutomaticFire = !bAutomaticFire;
+}
 
 // This function is invoked from the server.
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
@@ -67,6 +79,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Set the owner of this Actor, used primarily for network replication. 
 	EquippedWeapon->SetOwner(BlasterCharacter);
 
+	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
 
@@ -96,7 +109,6 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	// If the ownership is client, it'll be invoked from the server; if the ownership is server, it'll be invoked from the server as well.
 	ServerSetAiming(bIsAiming);
 }
-
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 {
@@ -142,24 +154,47 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 	
 }
 
+void UCombatComponent::Fire()
+{
+	if (!bRefireCheck || !bFireButtonPressed || !EquippedWeapon) return;
+	
+	AimFactor += EquippedWeapon->GetRecoilFactor();
+	ServerFire(HitTarget);
+	if (bAutomaticFire) StartFireTimer();
+}
+
 void UCombatComponent::FireButtonPressed(bool bPressed)
 {
 	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
-
-	if (!bFireButtonPressed || !EquippedWeapon) return;
-
-	AimFactor += EquippedWeapon->GetRecoilFactor();
-
-	// We can't calculate the HitResult in the multicast, or the machine will use its own screen to calculate the HitResult, which is
-	// different from the owning actor's HitResult. So we should do the work by the actor who pressed the fire button, and transmit
-	// the result over the network.
-	FHitResult HitResult;
-	TraceUnderCrosshairs(HitResult);
-	ServerFire(HitResult.ImpactPoint);
-	
+	Fire();
 }
+
+void UCombatComponent::StartFireTimer()
+{
+	if (!BlasterCharacter) return;
+
+	bRefireCheck = false;
+	BlasterCharacter->GetWorldTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, EquippedWeapon->GetFireRate(), false);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	bRefireCheck = true;
+	Fire();
+}
+
+void UCombatComponent::SwitchFireModeButtonPressed()
+{
+	if (!EquippedWeapon) return;
+	
+	if (bAutomaticFire && EquippedWeapon->GetCanSemiAutoFire() ||
+		!bAutomaticFire && EquippedWeapon->GetCanAutoFire())
+			bAutomaticFire = !bAutomaticFire;
+}
+
+
 
 
 
@@ -207,6 +242,7 @@ void UCombatComponent::TraceUnderCrosshairs(FHitResult& HitResult)
 			CrosshairColor = FColor::White;
 		}
 	}
+	HitTarget = HitResult.ImpactPoint;
 }
 
 void UCombatComponent::UpdateHUDCrosshairs(float DeltaTime)
@@ -292,7 +328,6 @@ void UCombatComponent::SetHUDPackage()
 		);
 	}
 }
-
 
 void UCombatComponent::AimZooming(float DeltaTime)
 {

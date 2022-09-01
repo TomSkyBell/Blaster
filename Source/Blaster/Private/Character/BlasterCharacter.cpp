@@ -166,13 +166,12 @@ void ABlasterCharacter::CorrectWeaponRotation(float DeltaTime)
 {
 	// TraceUnderCorsshairs is a machine-related function, so the HitResult cannot be known by the other machine unless by RPC.
 	if (!Combat) return;
-	FHitResult HitResult;
-	Combat->TraceUnderCrosshairs(HitResult);
+	
 	
 	// To adjust the hand rotation, to nearly match the two trace line, not precisely match. (This is a trick)
 	if (!Combat->EquippedWeapon || !Combat->EquippedWeapon->GetWeaponMesh()) return;
 	const FTransform RightHandTransform = Combat->EquippedWeapon->GetWeaponMesh()->GetSocketTransform(FName("hand_r"), ERelativeTransformSpace::RTS_World);
-	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(HitResult.ImpactPoint, RightHandTransform.GetLocation());
+	const FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(Combat->HitTarget, RightHandTransform.GetLocation());
 	RightHandRotation = FMath::RInterpTo(RightHandRotation, LookAtRotation, DeltaTime, 20.f);
 }
 
@@ -204,6 +203,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ThisClass::AimButtonReleased);
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
+	PlayerInputComponent->BindAction("SwitchFireMode", IE_Pressed, this, &ThisClass::SwitchFireModeButtonPressed);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ThisClass::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ThisClass::MoveRight);
@@ -252,18 +252,14 @@ void ABlasterCharacter::LookUpAtRate(float Value)
 
 void ABlasterCharacter::EquipButtonPressed()
 {
+	// Functionality which is implemented on the local machine.
 	if (Combat)
 	{
-		if (HasAuthority())
-		{
-			Combat->EquipWeapon(OverlappingWeapon);
-		}
-		else
-		{
-			// RPC called from the client
-			ServerEquipButtonPressed();
-		}
+		Combat->SetWeaponRelatedProperties();
 	}
+
+	// Functionality which is implemented on the server to let all the machines know.
+	ServerEquipButtonPressed();
 }
 
 void ABlasterCharacter::Jump()
@@ -311,6 +307,15 @@ void ABlasterCharacter::FireButtonReleased()
 		Combat->FireButtonPressed(false);
 	}
 }
+
+void ABlasterCharacter::SwitchFireModeButtonPressed()
+{
+	if (Combat)
+	{
+		Combat->SwitchFireModeButtonPressed();
+	}
+}
+
 
 
 

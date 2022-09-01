@@ -18,7 +18,6 @@ public:
 	friend class ABlasterCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 
 protected:
@@ -67,8 +66,37 @@ private:
 	UPROPERTY(EditAnywhere, Category = Movement)
 	float AimCrouchWalkSpeed = 150.f;
 
+	void Fire();
 	void FireButtonPressed(bool bPressed);
 	bool bFireButtonPressed;
+
+	/**
+	 *	Set a timer for the automatic fire.
+	 */
+	FTimerHandle FireTimer;
+
+	/**
+	 *	bAutomaticFire is not need to be known by other clients and the server. It's just a signal for the local machine,
+	 *	and the local machine will decide to use this signal to multicast fire with a timer or not. So it has not to be
+	 *	transmitted by RPCs and we should set it locally.
+	 */
+	bool bAutomaticFire = true;
+
+	/**
+	 *	For the automatic fire, we need to check the fire internal if the fire rate is slow. For example, when we fire a
+	 *	cannon, it needs time to cool down so there is a big interval. If we don't check and rapidly pressed the button,
+	 *	the timer will not take effect because it's always initialized once the button is pressed.
+	 */
+	bool bRefireCheck = true;
+	void StartFireTimer();
+	void FireTimerFinished();
+	void SwitchFireModeButtonPressed();
+
+	/**
+	 *	HitTarget can only be calculated on the local machine, because 'TraceUnderCrosshair' is a machine-related function.
+	 *	HitTarget can be transmitted as a parameter in the RPCs to let the server know.
+	 */
+	FVector HitTarget;
 	
 	/**
 	* Set the cross hairs texture of the HUD from the weapon once the weapon is equipped.
@@ -77,6 +105,7 @@ private:
 	void UpdateCrosshairSpread(float DeltaTime);
 	void UpdateHUDCrosshairs(float DeltaTime);
 	void SetHUDPackage();
+	void SetWeaponRelatedProperties();
 	
 	float VelocityFactor = 0.f;
 	
@@ -104,12 +133,12 @@ private:
 	float DefaultZoomOutSpeed = 10.f;
 
 	/**
-	 *
+	 *	Change the cross hair's spread when jumping, moving, aiming.
 	 */
 	float CrosshairSpread;
 	
 	/**
-	 *	Change the cross hair's color when aiming at the enemy
+	 *	Change the cross hair's color when aiming at the enemy.
 	 */
 	FColor CrosshairColor = FColor::White;
 };

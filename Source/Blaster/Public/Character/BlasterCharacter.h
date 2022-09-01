@@ -37,6 +37,7 @@ private:
 	void AimButtonReleased();
 	void FireButtonPressed();
 	void FireButtonReleased();
+	void SwitchFireModeButtonPressed();
 
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);

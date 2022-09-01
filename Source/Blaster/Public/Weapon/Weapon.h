@@ -89,6 +89,18 @@ private:
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float RecoilFactor = .75f;
 
+	/**
+	 *	Weapon's firing properties
+	 */
+	UPROPERTY(EditAnywhere, Category = Fire)
+	float FireRate = .05f;
+
+	UPROPERTY(EditAnywhere, Category = Fire)
+	bool CanAutoFire = true;
+
+	UPROPERTY(EditAnywhere, Category = Fire)
+	bool CanSemiAutoFire = true;
+
 public:
 	void SetWeaponState(EWeaponState State);
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
@@ -98,6 +110,9 @@ public:
 	FORCEINLINE float GetZoomOutSpeed() const { return ZoomOutSpeed; }
 	FORCEINLINE float GetAimAccuracy() const { return AimAccuracy; }
 	FORCEINLINE float GetRecoilFactor() const { return RecoilFactor; }
+	FORCEINLINE float GetFireRate() const { return FireRate; }
+	FORCEINLINE float GetCanAutoFire() const { return CanAutoFire; }
+	FORCEINLINE float GetCanSemiAutoFire() const { return CanSemiAutoFire; }
 
 	/**
 	* Textures for the weapon cross hairs
