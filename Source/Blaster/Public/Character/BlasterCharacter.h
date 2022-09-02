@@ -42,9 +42,6 @@ private:
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
 	void PlayFireMontage(bool bAiming) const;
-
-	UFUNCTION(NetMulticast, Unreliable)
-	void PlayHitReactMontage() const;
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -72,6 +69,9 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerEquipButtonPressed();
+
+	UPROPERTY(VisibleAnywhere)
+	class ABlasterPlayerController* BlasterPlayerController;
 
 	FRotator LastAimRotation;
 	float AO_Yaw, Interp_AO_Yaw;
@@ -118,6 +118,12 @@ private:
 
 	UFUNCTION()
 	void OnRep_Health();
+
+	UFUNCTION()
+	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
+
+	void UpdateHealth();
+	void PlayHitReactMontage() const;
 
 public:
 	bool IsWeaponEquipped() const;

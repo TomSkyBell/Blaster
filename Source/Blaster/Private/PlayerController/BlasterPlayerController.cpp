@@ -12,11 +12,10 @@ void ABlasterPlayerController::BeginPlay()
 	Super::BeginPlay();
 
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
-
-	SetCharacterHealth(75.f, 100.f);
+	
 }
 
-void ABlasterPlayerController::SetCharacterHealth(float Health, float MaxHealth)
+void ABlasterPlayerController::UpdateCharacterHealth(float Health, float MaxHealth)
 {
 	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());

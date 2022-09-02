@@ -15,7 +15,7 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 	GENERATED_BODY()
 
 public:
-	void SetCharacterHealth(float Health, float MaxHealth);
+	void UpdateCharacterHealth(float Health, float MaxHealth);
 	
 protected:
 	virtual void BeginPlay() override;

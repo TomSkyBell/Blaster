@@ -12,6 +12,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 #include "Blaster/Blaster.h"
+#include "HUD/CharacterOverlay.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 ABlasterCharacter::ABlasterCharacter()
 {
@@ -58,8 +60,12 @@ void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
+
 	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 	
+	// ApplyDamage is executed from the server, so ReceiveDamage can only be executed from the server, so need to recheck by HasAuthority().
+	OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -186,9 +192,40 @@ void ABlasterCharacter::HideCharacterIfClose()
 	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideCharacter);
 }
 
+void ABlasterCharacter::UpdateHealth()
+{
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+	if (!BlasterPlayerController) return;
+
+	BlasterPlayerController->UpdateCharacterHealth(Health, MaxHealth);
+}
+
+void ABlasterCharacter::PlayHitReactMontage() const
+{
+	if (!Combat || !Combat->EquippedWeapon) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && HitReactMontage)
+	{
+		AnimInstance->Montage_Play(HitReactMontage);
+		const FName SectionName = FName("FromLeft");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::OnRep_Health()
 {
-	
+	UpdateHealth();
+	PlayHitReactMontage();
+}
+
+// Receive Damage is executed from the server due to ApplyDamage() in OnHit(), so no need to recheck by HasAuthority().
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	Health = Health - Damage;
+
+	UpdateHealth();
+	PlayHitReactMontage();
 }
 
 
@@ -399,8 +436,6 @@ void ABlasterCharacter::OnRep_OverlappingWeapon(AWeapon* LastWeapon)
 	}
 }
 
-
-
 void ABlasterCharacter::PlayFireMontage(bool bAiming) const
 {
 	if (!Combat || !Combat->EquippedWeapon) return;
@@ -410,19 +445,6 @@ void ABlasterCharacter::PlayFireMontage(bool bAiming) const
 	{
 		AnimInstance->Montage_Play(FireWeaponMontage);
 		const FName SectionName = bAiming ? FName("Aim_Fire") : FName("Hip_Fire");
-		AnimInstance->Montage_JumpToSection(SectionName);
-	}
-}
-
-void ABlasterCharacter::PlayHitReactMontage_Implementation() const
-{
-	if (!Combat || !Combat->EquippedWeapon) return;
-
-	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-	if (AnimInstance && HitReactMontage)
-	{
-		AnimInstance->Montage_Play(HitReactMontage);
-		const FName SectionName = FName("FromLeft");
 		AnimInstance->Montage_JumpToSection(SectionName);
 	}
 }

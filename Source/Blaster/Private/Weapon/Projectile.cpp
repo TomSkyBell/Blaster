@@ -16,10 +16,12 @@ AProjectile::AProjectile()
 	
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
 	SetRootComponent(CollisionBox);
+	CollisionBox->SetCollisionObjectType(ECC_Projectile);
 	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
+	CollisionBox->SetCollisionResponseToChannel(ECC_Projectile, ECollisionResponse::ECR_Ignore);
 
 	// ProjectileMovementComponent updates the position of another component during its tick.
 	// If not SetUpdatedComponent(), then automatically set the root component as the updated component.
@@ -27,6 +29,7 @@ AProjectile::AProjectile()
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->InitialSpeed = 3000.f;
 	ProjectileMovementComponent->MaxSpeed = 3500.f;
+	
 }
 
 void AProjectile::BeginPlay()
@@ -71,11 +74,6 @@ void AProjectile::OnHit(
 	const FHitResult& Hit
 	)
 {
-	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
-	{
-		// NetMulticast the hit react montage.
-		BlasterCharacter->PlayHitReactMontage();
-	}
 	// Multicast the hit impact.
 	MulticastHitImpact(OtherActor);
 	
