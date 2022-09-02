@@ -107,6 +107,18 @@ private:
 	 */
 	void HideCharacterIfClose();
 
+	/**
+	 *	Player health
+	 */
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	float MaxHealth = 100.f;
+
+	UPROPERTY(VisibleAnywhere, Category = PlayerStats, ReplicatedUsing = OnRep_Health)
+	float Health = 100.f;
+
+	UFUNCTION()
+	void OnRep_Health();
+
 public:
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;

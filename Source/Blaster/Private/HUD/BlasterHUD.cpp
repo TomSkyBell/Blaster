@@ -2,6 +2,8 @@
 
 
 #include "HUD/BlasterHUD.h"
+#include "HUD/CharacterOverlay.h"
+#include "GameFramework/PlayerController.h"
 
 // The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
 void ABlasterHUD::DrawHUD()
@@ -18,6 +20,23 @@ void ABlasterHUD::DrawHUD()
 		DrawCrosshairs(HUDPackage.CrosshairsRight, FVector2D(HUDPackage.CrosshairsCurrentSpread, 0.f));
 		DrawCrosshairs(HUDPackage.CrosshairsTop, FVector2D(0.f, -HUDPackage.CrosshairsCurrentSpread));
 		DrawCrosshairs(HUDPackage.CrosshairsBottom, FVector2D(0.f, HUDPackage.CrosshairsCurrentSpread));
+	}
+}
+
+void ABlasterHUD::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	AddCharacterOverlay();
+}
+
+void ABlasterHUD::AddCharacterOverlay()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && CharacterOverlayClass)
+	{
+		CharacterOverlay = CreateWidget<UCharacterOverlay, APlayerController>(PlayerController, CharacterOverlayClass, FName("Character Overlay"));
+		CharacterOverlay->AddToViewport();
 	}
 }
 

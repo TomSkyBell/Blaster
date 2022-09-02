@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "BlasterTypes/HUDPackage.h"
-#include "Datasmith/DatasmithCore/Public/DatasmithDefinitions.h"
 #include "GameFramework/HUD.h"
 #include "BlasterHUD.generated.h"
 
@@ -20,10 +19,26 @@ public:
 	virtual void DrawHUD() override;
 	FORCEINLINE void SetHUDPackage(FHUDPackage Package) { HUDPackage = Package; }
 	FORCEINLINE void SetHUDSpread(float Spread) { HUDPackage.CrosshairsCurrentSpread = Spread; }
+	FORCEINLINE class UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
+
+protected:
+	virtual void BeginPlay() override;
 	
 private:
+	/**
+	 *	Access the character's overlay widget.
+	 */
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	TSubclassOf<class UUserWidget> CharacterOverlayClass;
+	
+	class UCharacterOverlay* CharacterOverlay;
+	void AddCharacterOverlay();
+	
+	/**
+	 *	Draw HUD cross hairs
+	 */
+	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& Spread);
+	
 	FHUDPackage HUDPackage;
 	FVector2D ViewportCenter;
-
-	void DrawCrosshairs(UTexture2D* Texture, const FVector2D& Spread);
 };

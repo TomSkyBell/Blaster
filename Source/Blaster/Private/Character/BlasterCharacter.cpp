@@ -186,6 +186,12 @@ void ABlasterCharacter::HideCharacterIfClose()
 	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideCharacter);
 }
 
+void ABlasterCharacter::OnRep_Health()
+{
+	
+}
+
+
 
 
 /**
@@ -336,6 +342,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 
 	// If OverlappingWeapon is replicated, then it'll be only effect on the owner so that the players will not interfere with each other 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
+	DOREPLIFETIME(ABlasterCharacter, Health);
 	
 }
 
