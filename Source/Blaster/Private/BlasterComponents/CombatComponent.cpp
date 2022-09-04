@@ -70,13 +70,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket"));
-	if (HandSocket)
+	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
 	{
 		// Automatically propagated to the clients, that's why we don't need to do attachment on the client again.
 		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
 	}
-	// Set the owner of this Actor, used primarily for network replication. 
+	// SetOwner() is a replication process, no need to redo it in OnRep.
 	EquippedWeapon->SetOwner(BlasterCharacter);
 
 	// The server solely set the properties, the clients' are set in the OnRep function.
@@ -92,6 +91,19 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 void UCombatComponent::OnRep_EquippedWeapon()
 {
+	/**************************************** Repnotify & Multicast Sequence Conflicts *******************************************/
+	
+	// SetWeaponState() can be only executed from the server, but we still set up here because of the replication delay, specifically,
+	// AttachActor needs the weapon to be set simulated physics, and this property is set when we do SetWeaponState() and it needs some
+	// time to replicate from the server to the client, which means when we attach actor on the server, the multicast speed is faster than
+	// the RepNotify, so when the client attach actor, it will fail because the Simulate Physics is not updated in time.
+	
+	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
+	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+	{
+		// Automatically propagated to the clients, that's why we don't need to do attachment on the client again.
+		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
+	}
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
 }

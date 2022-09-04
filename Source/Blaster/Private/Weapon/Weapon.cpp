@@ -22,7 +22,9 @@ AWeapon::AWeapon()
 	// Collision Preset --- Block all the other things except the pawn (so we can step over it once drop the weapon)
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
-	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Enable it when we on the server machine
+	WeaponMesh->SetSimulatePhysics(true);
+	WeaponMesh->SetEnableGravity(true);
+	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	
 	AreaSphere = CreateDefaultSubobject<USphereComponent>(TEXT("Area Sphere"));
 	AreaSphere->SetupAttachment(RootComponent);
@@ -47,8 +49,7 @@ void AWeapon::BeginPlay()
 	if (HasAuthority())
 	{
 		// Overlap events are only generated on the server.
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
 	}
@@ -85,14 +86,65 @@ void AWeapon::Fire(const FVector& TraceHitTarget)
 	}
 }
 
+void AWeapon::WeaponState_RepNotify()
+{
+	// Change the weapon's pickup widget in Server World to be invisible 
+	switch(WeaponState)
+	{
+	case EWeaponState::EWS_Equipped:
+		ShowPickupWidget(false);
+		
+		// SetWeaponState() is not always executed from the server, so we need to guarantee it on the server.
+		if (HasAuthority())
+		{
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+		WeaponMesh->SetSimulatePhysics(false);
+		WeaponMesh->SetEnableGravity(false);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		break;
+		
+	case EWeaponState::EWS_Dropped:
+		if (HasAuthority())
+		{
+			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		WeaponMesh->SetSimulatePhysics(true);
+		WeaponMesh->SetEnableGravity(true);
+		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		break;
+
+	case EWeaponState::EWS_Initial:
+		break;
+		
+	case EWeaponState::EWS_Max:
+		break;
+	}
+}
 
 void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
 	
-	// Change the weapon's pickup widget in Server World to be invisible 
-	ShowPickupWidget(false);
-	GetAreaSphere()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	WeaponState_RepNotify();
+}
+
+// Change the weapon's pickup widget in clients' world to be invisible
+void AWeapon::OnRep_WeaponState()
+{
+	WeaponState_RepNotify();
+}
+
+void AWeapon::Dropped()
+{
+	// Drop is executed from the server.
+	// Drop is a rep + multicast process, SetWeaponState() is a replication work in which we can see its source code.
+	// DetachFromActor() is like AttachActor(), which is a multicast process, so as the SetOwner(). So we don't need
+	// to set a multicast RPC for the Dropped().
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+	DetachFromActor(DetachmentTransformRules);
+	SetOwner(nullptr);
 }
 
 void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -110,17 +162,3 @@ void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActo
 		BlasterCharacter->SetOverlappingWeapon(nullptr); 
 	}
 }
-
-// Change the weapon's pickup widget in clients' world to be invisible
-void AWeapon::OnRep_WeaponState()
-{
-	switch(WeaponState)
-	{
-	case EWeaponState::EWS_Equipped:
-		ShowPickupWidget(false);
-		AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		break;
-	}
-}
-
-

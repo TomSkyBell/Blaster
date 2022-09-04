@@ -62,6 +62,8 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 
+	void WeaponState_RepNotify();
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* PickupWidget;
 
@@ -103,6 +105,8 @@ private:
 
 public:
 	void SetWeaponState(EWeaponState State);
+	void Dropped();
+	
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetAim_FOV() const { return Aim_FOV; }

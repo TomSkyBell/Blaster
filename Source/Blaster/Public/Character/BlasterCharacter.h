@@ -42,6 +42,7 @@ private:
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
 	void PlayFireMontage(bool bAiming) const;
+	void Eliminated();
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
@@ -96,6 +97,12 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* HitReactMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* DeathHipMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* DeathIronMontage;
+
 	/**
 	 *	Set a threshold between camera and the character to avoid blocking.
 	 */
@@ -108,7 +115,7 @@ private:
 	void HideCharacterIfClose();
 
 	/**
-	 *	Player health
+	 *	Player status.
 	 */
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	float MaxHealth = 100.f;
@@ -116,14 +123,26 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = PlayerStats, ReplicatedUsing = OnRep_Health)
 	float Health = 100.f;
 
+	FTimerHandle RespawnTimer;
+
+	UPROPERTY(EditAnywhere, Category = PlayerStats)
+	float TimerDelay = 5.f;
+	
+	void RespawnTimerFinished();
+
 	UFUNCTION()
 	void OnRep_Health();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEliminated();
 
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
 	void UpdateHealth();
 	void PlayHitReactMontage() const;
+	void PlayDeathHipMontage() const;
+	void PlayDeathIronMontage() const;
 
 public:
 	bool IsWeaponEquipped() const;
@@ -135,4 +154,6 @@ public:
 	FORCEINLINE ETurningInPlace GetTuringInPlace() const { return TurningInPlace; }
 	bool IsFireButtonPressed() const;
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE float GetHealth() const { return Health; }
+	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 };

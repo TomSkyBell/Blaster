@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 #include "Blaster/Blaster.h"
+#include "GameMode/BlasterGameMode.h"
 #include "HUD/CharacterOverlay.h"
 #include "PlayerController/BlasterPlayerController.h"
 
@@ -59,13 +60,13 @@ ABlasterCharacter::ABlasterCharacter()
 void ABlasterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-
-	BlasterPlayerController = Cast<ABlasterPlayerController>(Controller);
-
-	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 	
-	// ApplyDamage is executed from the server, so ReceiveDamage can only be executed from the server, so need to recheck by HasAuthority().
-	OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
+
+	UpdateHealth();
+	
+	if (HasAuthority()) OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
+	
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)
@@ -202,7 +203,9 @@ void ABlasterCharacter::UpdateHealth()
 
 void ABlasterCharacter::PlayHitReactMontage() const
 {
-	if (!Combat || !Combat->EquippedWeapon) return;
+	// If health <= 0.f, it should play the eliminated animation rather than the hit react.
+	// We can make a check if (Health <= 0.f) here because it's in the OnRep function, in which the Health updates before check.
+	if (!Combat || !Combat->EquippedWeapon || Health <= 0.f) return;
 
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (AnimInstance && HitReactMontage)
@@ -213,19 +216,99 @@ void ABlasterCharacter::PlayHitReactMontage() const
 	}
 }
 
+void ABlasterCharacter::PlayDeathHipMontage() const
+{
+	// Since health is a replicated variable, it may not update immediately due to the network state, so we cannot check if (Health < 0.f) here
+	// unless we are in a OnRep_Health() function.
+	// The montage is played only when the character is holding a weapon.
+	if (!Combat || !Combat->EquippedWeapon) return;
+	
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathHipMontage)
+	{
+		AnimInstance->Montage_Play(DeathHipMontage);
+		const FName SectionName = FName("Death Hip 1");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::PlayDeathIronMontage() const
+{
+	// Since health is a replicated variable, it may not update immediately due to the network state, so we cannot check if (Health < 0.f) here.
+	// unless we are in a OnRep_Health() function.
+	// The montage is played only when the character is holding a weapon.
+	if (!Combat || !Combat->EquippedWeapon) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && DeathIronMontage)
+	{
+		AnimInstance->Montage_Play(DeathIronMontage);
+		const FName SectionName = FName("Death Iron 1");
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
+void ABlasterCharacter::Eliminated()
+{
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+	MulticastEliminated();
+	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ThisClass::RespawnTimerFinished, TimerDelay, false);
+}
+
+void ABlasterCharacter::RespawnTimerFinished()
+{
+	if (!GetWorld()) return;
+	
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
 void ABlasterCharacter::OnRep_Health()
 {
 	UpdateHealth();
 	PlayHitReactMontage();
 }
 
+void ABlasterCharacter::MulticastEliminated_Implementation()
+{
+	if (GetCapsuleComponent()) GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetMesh()) GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
+}
+
 // Receive Damage is executed from the server due to ApplyDamage() in OnHit(), so no need to recheck by HasAuthority().
+// In this function, DamagedActor == this, so it's a little bit over-defined.
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
-	Health = Health - Damage;
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 
 	UpdateHealth();
 	PlayHitReactMontage();
+
+	if (Health <= 0.f && GetWorld())
+	{
+		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		{
+			BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
 }
 
 
