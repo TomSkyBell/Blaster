@@ -14,6 +14,8 @@
 #include "Blaster/Blaster.h"
 #include "GameMode/BlasterGameMode.h"
 #include "HUD/CharacterOverlay.h"
+#include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 #include "PlayerController/BlasterPlayerController.h"
 
 ABlasterCharacter::ABlasterCharacter()
@@ -238,6 +240,8 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
 
 	StartDissolve();
+	PlayElimBotEffect();
+	OverheadWidget->DestroyComponent(true);
 }
 
 // Receive Damage is executed from the server due to ApplyDamage() in OnHit(), so no need to recheck by HasAuthority().
@@ -337,6 +341,13 @@ void ABlasterCharacter::StartDissolve()
 	DissolveTrack.BindDynamic(this, &ThisClass::UpdateMaterial);
 	TimelineComponent->AddInterpFloat(DissolveCurve, DissolveTrack);
 	TimelineComponent->Play();
+}
+
+void ABlasterCharacter::PlayElimBotEffect()
+{
+	const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, 200.f);
+	UGameplayStatics::SpawnEmitterAtLocation(this, ElimBot, SpawnLocation);
+	UGameplayStatics::PlaySoundAtLocation(this, ElimBotSound, SpawnLocation, FRotator::ZeroRotator);
 }
 
 

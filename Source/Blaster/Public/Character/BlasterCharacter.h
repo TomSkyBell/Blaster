@@ -127,7 +127,7 @@ private:
 	FTimerHandle RespawnTimer;
 
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
-	float TimerDelay = 5.f;
+	float TimerDelay = 3.f;
 	
 	void RespawnTimerFinished();
 
@@ -166,6 +166,17 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UMaterialInstance* DissolveMatInst;
+
+	/**
+	 *	Eliminated Particle Effect -- Robot
+	 */
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UParticleSystem* ElimBot;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	USoundBase* ElimBotSound;
+
+	void PlayElimBotEffect();
 
 public:
 	bool IsWeaponEquipped() const;
