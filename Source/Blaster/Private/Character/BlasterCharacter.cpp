@@ -45,6 +45,8 @@ ABlasterCharacter::ABlasterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	Combat->SetIsReplicated(true);
 
+	TimelineComponent = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline Component"));
+
 	// Avoid the zooming effect (camera overlaps with the character)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -193,6 +195,71 @@ void ABlasterCharacter::HideCharacterIfClose()
 	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideCharacter);
 }
 
+void ABlasterCharacter::Eliminated()
+{
+	if (Combat && Combat->EquippedWeapon)
+	{
+		Combat->EquippedWeapon->Dropped();
+	}
+	MulticastEliminated();
+	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ThisClass::RespawnTimerFinished, TimerDelay, false);
+}
+
+void ABlasterCharacter::RespawnTimerFinished()
+{
+	if (!GetWorld()) return;
+	
+	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+	{
+		BlasterGameMode->RequestRespawn(this, Controller);
+	}
+}
+
+void ABlasterCharacter::OnRep_Health()
+{
+	UpdateHealth();
+	PlayHitReactMontage();
+}
+
+void ABlasterCharacter::MulticastEliminated_Implementation()
+{
+	if (GetCapsuleComponent()) GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetMesh()) GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (GetCharacterMovement())
+	{
+		GetCharacterMovement()->DisableMovement();
+		GetCharacterMovement()->StopMovementImmediately();
+	}
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+	if (BlasterPlayerController)
+	{
+		DisableInput(BlasterPlayerController);
+	}
+	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
+
+	StartDissolve();
+}
+
+// Receive Damage is executed from the server due to ApplyDamage() in OnHit(), so no need to recheck by HasAuthority().
+// In this function, DamagedActor == this, so it's a little bit over-defined.
+void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
+{
+	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
+
+	UpdateHealth();
+	PlayHitReactMontage();
+
+	if (Health <= 0.f && GetWorld())
+	{
+		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
+		{
+			BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
+			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
+		}
+	}
+}
+
 void ABlasterCharacter::UpdateHealth()
 {
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
@@ -248,68 +315,31 @@ void ABlasterCharacter::PlayDeathIronMontage() const
 	}
 }
 
-void ABlasterCharacter::Eliminated()
+void ABlasterCharacter::UpdateMaterial(float CurveValue)
 {
-	if (Combat && Combat->EquippedWeapon)
-	{
-		Combat->EquippedWeapon->Dropped();
-	}
-	MulticastEliminated();
-	GetWorldTimerManager().SetTimer(RespawnTimer, this, &ThisClass::RespawnTimerFinished, TimerDelay, false);
+	if (!DynamicDissolveMatInst) return;
+	DynamicDissolveMatInst->SetScalarParameterValue(FName("Dissolve"), CurveValue);
 }
 
-void ABlasterCharacter::RespawnTimerFinished()
+void ABlasterCharacter::StartDissolve()
 {
-	if (!GetWorld()) return;
-	
-	if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
-	{
-		BlasterGameMode->RequestRespawn(this, Controller);
-	}
+	if (!TimelineComponent || !DissolveCurve || !GetMesh()) return;
+
+	// Initialize the dynamic material.
+	DynamicDissolveMatInst = UMaterialInstanceDynamic::Create(DissolveMatInst, this);
+	if (!DynamicDissolveMatInst) return;
+
+	GetMesh()->SetMaterial(0, DynamicDissolveMatInst);
+	DynamicDissolveMatInst->SetScalarParameterValue(FName("Dissolve"), 0.55f);
+	DynamicDissolveMatInst->SetScalarParameterValue(FName("Glow"), 200.f);
+
+	// Initialize the timeline component.
+	DissolveTrack.BindDynamic(this, &ThisClass::UpdateMaterial);
+	TimelineComponent->AddInterpFloat(DissolveCurve, DissolveTrack);
+	TimelineComponent->Play();
 }
 
-void ABlasterCharacter::OnRep_Health()
-{
-	UpdateHealth();
-	PlayHitReactMontage();
-}
 
-void ABlasterCharacter::MulticastEliminated_Implementation()
-{
-	if (GetCapsuleComponent()) GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	if (GetMesh()) GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	if (GetCharacterMovement())
-	{
-		GetCharacterMovement()->DisableMovement();
-		GetCharacterMovement()->StopMovementImmediately();
-	}
-	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
-	if (BlasterPlayerController)
-	{
-		DisableInput(BlasterPlayerController);
-	}
-	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
-}
-
-// Receive Damage is executed from the server due to ApplyDamage() in OnHit(), so no need to recheck by HasAuthority().
-// In this function, DamagedActor == this, so it's a little bit over-defined.
-void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
-{
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-
-	UpdateHealth();
-	PlayHitReactMontage();
-
-	if (Health <= 0.f && GetWorld())
-	{
-		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
-		{
-			BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
-			ABlasterPlayerController* AttackerController = Cast<ABlasterPlayerController>(InstigatedBy);
-			BlasterGameMode->PlayerEliminated(this, BlasterPlayerController, AttackerController);
-		}
-	}
-}
 
 
 

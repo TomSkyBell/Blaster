@@ -4,12 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "BlasterTypes/TurningInPlace.h"
+#include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "Interface/InteractWithCrosshairsInterface.h"
 #include "BlasterCharacter.generated.h"
 
 
-
+class FOnTimelineFloat;
 UCLASS()
 class BLASTER_API ABlasterCharacter : public ACharacter, public IInteractWithCrosshairsInterface
 {
@@ -143,6 +144,28 @@ private:
 	void PlayHitReactMontage() const;
 	void PlayDeathHipMontage() const;
 	void PlayDeathIronMontage() const;
+
+	/**
+	 *	Dissolve Effect
+	 */
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	UTimelineComponent* TimelineComponent;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UCurveFloat* DissolveCurve;
+
+	FOnTimelineFloat DissolveTrack;
+
+	UFUNCTION()
+	void UpdateMaterial(float CurveValue);
+
+	void StartDissolve();
+
+	UPROPERTY(VisibleAnywhere, Category = Elim)
+	UMaterialInstanceDynamic* DynamicDissolveMatInst;
+
+	UPROPERTY(EditAnywhere, Category = Elim)
+	UMaterialInstance* DissolveMatInst;
 
 public:
 	bool IsWeaponEquipped() const;
