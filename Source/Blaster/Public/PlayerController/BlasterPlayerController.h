@@ -14,14 +14,15 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 
+protected:
+	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	
 public:
 	void UpdatePlayerHealth(float Health, float MaxHealth);
 	void UpdatePlayerScore(float Value);
 	void UpdatePlayerDefeats(int32 Value);
-	
-protected:
-	virtual void BeginPlay() override;
-	virtual void OnPossess(APawn* InPawn) override;
+	void RefreshHUD();
 
 private:
 	UPROPERTY()

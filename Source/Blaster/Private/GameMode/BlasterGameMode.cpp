@@ -36,7 +36,7 @@ void ABlasterGameMode::RequestRespawn(ABlasterCharacter* EliminatedCharacter, AC
 	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
 	const int32 PlayerStartIndex = FMath::RandRange(0, PlayerStarts.Num() - 1);
 
-	// It's a NetMulticast function, so the client and the server can both see the effect.
+	// It's not a NetMulticast function, when spawning a replicated actor, the actor will be spawned on all clients.
 	RestartPlayerAtPlayerStart(EliminatedController, PlayerStarts[PlayerStartIndex]);
 }
 

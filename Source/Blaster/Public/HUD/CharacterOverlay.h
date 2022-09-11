@@ -26,5 +26,14 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Defeats;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* DefeatedMsg;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* DefeatedMsgAnim;
+
+public:
+	void DisplayDefeatedMsg(ESlateVisibility Param);
 	
 };

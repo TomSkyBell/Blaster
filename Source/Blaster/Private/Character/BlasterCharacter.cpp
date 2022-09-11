@@ -221,6 +221,14 @@ void ABlasterCharacter::OnRep_Health()
 	PlayHitReactMontage();
 }
 
+void ABlasterCharacter::OnRep_IsRespawned()
+{
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
+	if (!BlasterPlayerController) return;
+	
+	BlasterPlayerController->RefreshHUD();
+}
+
 void ABlasterCharacter::MulticastEliminated_Implementation()
 {
 	if (GetCapsuleComponent()) GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -502,7 +510,7 @@ void ABlasterCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 	// If OverlappingWeapon is replicated, then it'll be only effect on the owner so that the players will not interfere with each other 
 	DOREPLIFETIME_CONDITION(ABlasterCharacter, OverlappingWeapon, COND_OwnerOnly);
 	DOREPLIFETIME(ABlasterCharacter, Health);
-	
+	DOREPLIFETIME(ABlasterCharacter, IsRespawned);
 }
 
 void ABlasterCharacter::PostInitializeComponents()
