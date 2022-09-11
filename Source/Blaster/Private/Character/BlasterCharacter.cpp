@@ -269,7 +269,7 @@ void ABlasterCharacter::UpdateHealth()
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
 	if (!BlasterPlayerController) return;
 
-	BlasterPlayerController->UpdateCharacterHealth(Health, MaxHealth);
+	BlasterPlayerController->UpdatePlayerHealth(Health, MaxHealth);
 }
 
 void ABlasterCharacter::PlayHitReactMontage() const

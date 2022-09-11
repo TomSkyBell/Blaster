@@ -20,25 +20,31 @@ void ABlasterPlayerController::BeginPlay()
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-
-	if (const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
-	{
-		UpdateCharacterHealth(BlasterCharacter->GetHealth(), BlasterCharacter->GetMaxHealth());
-	}
+	
 }
 
 
-void ABlasterPlayerController::UpdateCharacterHealth(float Health, float MaxHealth)
+void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
 {
 	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->HealthBar ||
-		!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->HealthText) return;
+		!BlasterHUD->GetCharacterOverlay()->HealthText) return;
 	
 	BlasterHUD->GetCharacterOverlay()->HealthBar->SetPercent(Health / MaxHealth);
 	const FString HealthText = FString::Printf(TEXT("%d / %d"), FMath::CeilToInt(Health), FMath::CeilToInt(MaxHealth));
 	BlasterHUD->GetCharacterOverlay()->HealthText->SetText(FText::FromString(HealthText));
 }
 
+void ABlasterPlayerController::UpdatePlayerScore(float Value)
+{
+	// First check the BlasterHUD
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->ScoreText) return;
+	
+	const FString ScoreText = FString::Printf(TEXT("Score: %d"), FMath::CeilToInt(Value));
+	BlasterHUD->GetCharacterOverlay()->ScoreText->SetText(FText::FromString(ScoreText));
+}
 
