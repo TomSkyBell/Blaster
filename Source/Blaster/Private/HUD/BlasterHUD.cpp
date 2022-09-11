@@ -2,6 +2,8 @@
 
 
 #include "HUD/BlasterHUD.h"
+
+#include "Components/TextBlock.h"
 #include "HUD/CharacterOverlay.h"
 #include "GameFramework/PlayerController.h"
 
@@ -36,6 +38,8 @@ void ABlasterHUD::AddCharacterOverlay()
 	if (PlayerController && CharacterOverlayClass)
 	{
 		CharacterOverlay = CreateWidget<UCharacterOverlay, APlayerController>(PlayerController, CharacterOverlayClass, FName("Character Overlay"));
+		if (!CharacterOverlay) return;
+		
 		CharacterOverlay->AddToViewport();
 	}
 }

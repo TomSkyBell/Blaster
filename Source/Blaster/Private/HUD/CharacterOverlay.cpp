@@ -2,4 +2,15 @@
 
 
 #include "HUD/CharacterOverlay.h"
+#include "Components/TextBlock.h"
 
+void UCharacterOverlay::DisplayDefeatedMsg(ESlateVisibility Param)
+{
+	DefeatedMsg->SetVisibility(Param);
+	
+	if (Param == ESlateVisibility::Visible)
+	{
+		PlayAnimation(DefeatedMsgAnim);
+	}
+	else {}
+}

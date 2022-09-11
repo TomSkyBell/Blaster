@@ -2,7 +2,6 @@
 
 
 #include "PlayerState/BlasterPlayerState.h"
-
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
 
