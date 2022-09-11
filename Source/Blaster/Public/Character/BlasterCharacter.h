@@ -121,8 +121,10 @@ private:
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	float MaxHealth = 100.f;
 
+	// We set health value to be 0.f when constructed, and set it to be 100.f in OnPossess() to implement the RepNotify because for
+	// some reason OnPossess is implemented only on the server, not on owning client.
 	UPROPERTY(VisibleAnywhere, Category = PlayerStats, ReplicatedUsing = OnRep_Health)
-	float Health = 100.f;
+	float Health = 0.f;
 
 	FTimerHandle RespawnTimer;
 
@@ -190,4 +192,6 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
+	FORCEINLINE void SetHealth(const float HealthValue) { Health = HealthValue; }
+	FORCEINLINE void SetMaxHealth(const float MaxHealthValue) { MaxHealth = MaxHealthValue; }
 };

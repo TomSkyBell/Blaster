@@ -21,8 +21,19 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
+	{
+		//   OnPossess is not implemented on each owning client and server though it's indeed visually destroyed on each machine,
+		// but logically it's destroyed and respawned on the server.
+		//   Besides, OnPossess is not a multicast, so once the pawn is destroyed and respawned on the server, the destroyed and
+		// respawned can take effect on the clients as well, but as for the OnPossess, it could only be done on the server.
+		//   So we need to do the RepNotify again to make a multicast. Something to note is that OnPossess() is executed after the
+		// constructor, so if we set health in a constructor or set as default when declare it in header file, we need to make sure
+		// its value shouldn't be 100.f, otherwise the replication won't work.
+		BlasterCharacter->SetHealth(100.f);
+		UpdatePlayerHealth(100.f, 100.f);
+	}
 }
-
 
 void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
 {
@@ -42,9 +53,20 @@ void ABlasterPlayerController::UpdatePlayerScore(float Value)
 	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	
-	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->ScoreText) return;
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->Score) return;
 	
-	const FString ScoreText = FString::Printf(TEXT("Score: %d"), FMath::CeilToInt(Value));
-	BlasterHUD->GetCharacterOverlay()->ScoreText->SetText(FText::FromString(ScoreText));
+	const FString ScoreText = FString::Printf(TEXT("%d"), FMath::FloorToInt(Value));
+	BlasterHUD->GetCharacterOverlay()->Score->SetText(FText::FromString(ScoreText));
+}
+
+void ABlasterPlayerController::UpdatePlayerDefeats(int32 Value)
+{
+	// First check the BlasterHUD
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->Defeats) return;
+	
+	const FString DefeatsText = FString::Printf(TEXT("%d"), Value);
+	BlasterHUD->GetCharacterOverlay()->Defeats->SetText(FText::FromString(DefeatsText));
 }
 

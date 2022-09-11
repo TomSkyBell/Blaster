@@ -41,8 +41,13 @@ private:
 	/**
 	 * Cross hair HUD and the player controller, player character
 	 */
+	UPROPERTY()
 	class ABlasterCharacter* BlasterCharacter;
+
+	UPROPERTY()
 	class ABlasterPlayerController* BlasterPlayerController;
+
+	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
 
 	UPROPERTY(ReplicatedUsing = OnRep_EquippedWeapon)

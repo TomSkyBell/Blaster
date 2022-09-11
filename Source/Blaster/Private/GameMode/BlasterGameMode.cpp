@@ -15,9 +15,11 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 	if (!EliminatedCharacter || !AttackerController || !VictimController) return;
 
 	ABlasterPlayerState* AttackerPlayerState = AttackerController->GetPlayerState<ABlasterPlayerState>();
-	if (!AttackerPlayerState) return;
+	ABlasterPlayerState* VictimPlayerState = VictimController->GetPlayerState<ABlasterPlayerState>();
+	if (!AttackerPlayerState || !VictimPlayerState || AttackerPlayerState == VictimPlayerState) return;
 
 	AttackerPlayerState->UpdateScore();
+	VictimPlayerState->UpdateDefeats();
 	EliminatedCharacter->Eliminated();
 }
 

@@ -66,8 +66,6 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
-
-	UpdateHealth();
 	
 	if (HasAuthority()) OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
 	

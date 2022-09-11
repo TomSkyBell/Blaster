@@ -30,7 +30,8 @@ private:
 	 */
 	UPROPERTY(EditAnywhere, Category = PlayerStats)
 	TSubclassOf<class UUserWidget> CharacterOverlayClass;
-	
+
+	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
 	void AddCharacterOverlay();
 	
