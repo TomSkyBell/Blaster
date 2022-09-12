@@ -68,6 +68,16 @@ void ABlasterPlayerController::UpdatePlayerDefeats(int32 Value)
 	BlasterHUD->GetCharacterOverlay()->DisplayDefeatedMsg(ESlateVisibility::Visible);
 }
 
+void ABlasterPlayerController::UpdateWeaponAmmo(int32 AmmoAmount)
+{
+	// First check the BlasterHUD
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->AmmoAmount) return;
+	
+	const FString AmmoText = FString::Printf(TEXT("%d"), AmmoAmount);
+	BlasterHUD->GetCharacterOverlay()->AmmoAmount->SetText(FText::FromString(AmmoText));
+}
+
 void ABlasterPlayerController::RefreshHUD()
 {
 	// First check the BlasterHUD

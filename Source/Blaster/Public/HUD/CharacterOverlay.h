@@ -33,6 +33,12 @@ public:
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	class UWidgetAnimation* DefeatedMsgAnim;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* AmmoText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* AmmoAmount;
+	
 public:
 	void DisplayDefeatedMsg(ESlateVisibility Param);
 	

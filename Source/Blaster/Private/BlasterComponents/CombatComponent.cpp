@@ -68,6 +68,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (!BlasterCharacter || !WeaponToEquip) return;
 
+	if (EquippedWeapon) EquippedWeapon->Dropped();
+
 	EquippedWeapon = WeaponToEquip;
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
@@ -77,6 +79,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	}
 	// SetOwner() is a replication process, no need to redo it in OnRep.
 	EquippedWeapon->SetOwner(BlasterCharacter);
+	EquippedWeapon->SetHUDAmmo();
 
 	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -97,6 +100,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	// AttachActor needs the weapon to be set simulated physics, and this property is set when we do SetWeaponState() and it needs some
 	// time to replicate from the server to the client, which means when we attach actor on the server, the multicast speed is faster than
 	// the RepNotify, so when the client attach actor, it will fail because the Simulate Physics is not updated in time.
+	if (!EquippedWeapon || !BlasterCharacter || !BlasterCharacter->GetMesh()) return;
 	
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
@@ -168,7 +172,7 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
-	if (!bRefireCheck || !bFireButtonPressed || !EquippedWeapon) return;
+	if (!bRefireCheck || !bFireButtonPressed || !EquippedWeapon || EquippedWeapon->GetAmmo() <= 0) return;
 	
 	AimFactor += EquippedWeapon->GetRecoilFactor();
 	ServerFire(HitTarget);

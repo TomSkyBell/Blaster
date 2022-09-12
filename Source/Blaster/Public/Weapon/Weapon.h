@@ -27,6 +27,10 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& TraceHitTarget);
+	void SetWeaponState(EWeaponState State);
+	void Dropped();
+	void SpendRound();
+	void SetHUDAmmo();
 	
 protected:
 	virtual void BeginPlay() override;
@@ -50,6 +54,12 @@ protected:
 	);
 
 private:
+	UPROPERTY()
+	class ABlasterCharacter* WeaponOwnerCharacter;
+	
+	UPROPERTY()
+	class ABlasterPlayerController* WeaponOwnerController;
+	
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	USkeletalMeshComponent* WeaponMesh;
 
@@ -102,11 +112,21 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Fire)
 	bool CanSemiAutoFire = true;
+	
+	UPROPERTY(EditAnywhere, Category = Fire, ReplicatedUsing = OnRep_Ammo)
+	int32 Ammo = 30;
+
+	UFUNCTION()
+	virtual void OnRep_Ammo();
+
+	/**
+	 *	We need to make sure the owner exists when we update the ammo HUD which depends on the owner.
+	 */
+	virtual void OnRep_Owner() override;
+
+	void ResetOwnership();
 
 public:
-	void SetWeaponState(EWeaponState State);
-	void Dropped();
-	
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }
 	FORCEINLINE float GetAim_FOV() const { return Aim_FOV; }
@@ -117,6 +137,8 @@ public:
 	FORCEINLINE float GetFireRate() const { return FireRate; }
 	FORCEINLINE float GetCanAutoFire() const { return CanAutoFire; }
 	FORCEINLINE float GetCanSemiAutoFire() const { return CanSemiAutoFire; }
+	FORCEINLINE int32 GetAmmo() const { return Ammo; }
+	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
 
 	/**
 	* Textures for the weapon cross hairs

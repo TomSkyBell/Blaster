@@ -7,6 +7,7 @@
 #include "Components/WidgetComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 AWeapon::AWeapon()
 {
@@ -66,6 +67,7 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
+	DOREPLIFETIME(AWeapon, Ammo);
 }
 
 
@@ -84,6 +86,69 @@ void AWeapon::Fire(const FVector& TraceHitTarget)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
+}
+
+void AWeapon::SetWeaponState(EWeaponState State)
+{
+	WeaponState = State;
+	
+	WeaponState_RepNotify();
+}
+
+void AWeapon::Dropped()
+{
+	// Drop is executed from the server.
+	// Drop is a rep + multicast process, SetWeaponState() is a replication work in which we can see its source code.
+	// DetachFromActor() is like AttachActor(), which is a multicast process, so as the SetOwner(). So we don't need
+	// to set a multicast RPC for the Dropped().
+	SetWeaponState(EWeaponState::EWS_Dropped);
+	const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
+	DetachFromActor(DetachmentTransformRules);
+	SetOwner(nullptr);
+	ResetOwnership();
+}
+
+void AWeapon::SpendRound()
+{
+	Ammo -= 1;
+	
+	SetHUDAmmo();
+	
+}
+
+void AWeapon::OnRep_Ammo()
+{
+	SetHUDAmmo();
+}
+
+void AWeapon::SetHUDAmmo()
+{
+	// We need to make sure the owner exists when we update the HUD, that's reason why we don't choose to put the logic
+	// into the OnRep_WeaponState(), because the replication conflict between WeaponState and Owner, which we don't know
+	// which replication is faster. (If weapon state is faster, then the owner is not available.)
+	WeaponOwnerCharacter = WeaponOwnerCharacter ? WeaponOwnerCharacter : Cast<ABlasterCharacter>(GetOwner());
+	if (!WeaponOwnerCharacter) return;
+
+	WeaponOwnerController = WeaponOwnerController ? WeaponOwnerController : Cast<ABlasterPlayerController>(WeaponOwnerCharacter->Controller);
+	if (!WeaponOwnerController) return;
+	
+	WeaponOwnerController->UpdateWeaponAmmo(Ammo);
+}
+
+void AWeapon::OnRep_Owner()
+{
+	Super::OnRep_Owner();
+	
+	// Recover the ownership, otherwise if a player drops the weapon and another player picks up the weapon, it will
+	// update the other player's HUD. 
+	if (GetOwner() == nullptr) ResetOwnership();
+	else SetHUDAmmo();
+}
+
+void AWeapon::ResetOwnership()
+{
+	WeaponOwnerCharacter = nullptr;
+	WeaponOwnerController = nullptr;
 }
 
 void AWeapon::WeaponState_RepNotify()
@@ -122,29 +187,10 @@ void AWeapon::WeaponState_RepNotify()
 	}
 }
 
-void AWeapon::SetWeaponState(EWeaponState State)
-{
-	WeaponState = State;
-	
-	WeaponState_RepNotify();
-}
-
 // Change the weapon's pickup widget in clients' world to be invisible
 void AWeapon::OnRep_WeaponState()
 {
 	WeaponState_RepNotify();
-}
-
-void AWeapon::Dropped()
-{
-	// Drop is executed from the server.
-	// Drop is a rep + multicast process, SetWeaponState() is a replication work in which we can see its source code.
-	// DetachFromActor() is like AttachActor(), which is a multicast process, so as the SetOwner(). So we don't need
-	// to set a multicast RPC for the Dropped().
-	SetWeaponState(EWeaponState::EWS_Dropped);
-	const FDetachmentTransformRules DetachmentTransformRules(EDetachmentRule::KeepWorld, true);
-	DetachFromActor(DetachmentTransformRules);
-	SetOwner(nullptr);
 }
 
 void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

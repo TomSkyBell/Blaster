@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/SlateWrapperTypes.h"
 #include "GameFramework/PlayerController.h"
 #include "BlasterPlayerController.generated.h"
 
@@ -22,6 +23,7 @@ public:
 	void UpdatePlayerHealth(float Health, float MaxHealth);
 	void UpdatePlayerScore(float Value);
 	void UpdatePlayerDefeats(int32 Value);
+	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void RefreshHUD();
 
 private:

@@ -6,7 +6,7 @@
 
 void UCharacterOverlay::DisplayDefeatedMsg(ESlateVisibility Param)
 {
-	DefeatedMsg->SetVisibility(Param);
+	if (DefeatedMsg) DefeatedMsg->SetVisibility(Param);
 	
 	if (Param == ESlateVisibility::Visible)
 	{
