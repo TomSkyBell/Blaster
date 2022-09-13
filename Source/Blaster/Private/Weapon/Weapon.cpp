@@ -67,7 +67,10 @@ void AWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AWeapon, WeaponState);
-	DOREPLIFETIME(AWeapon, Ammo);
+	
+	// Weapon Ammo is correlated with the HUD Ammo, HUD can only be updated on the owning client, so we should declare
+	// the Ammo as COND_OwnerOnly except that the Ammo need shared among the clients.
+	DOREPLIFETIME_CONDITION(AWeapon, Ammo, COND_OwnerOnly);
 }
 
 

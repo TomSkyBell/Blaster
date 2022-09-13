@@ -72,10 +72,20 @@ void ABlasterPlayerController::UpdateWeaponAmmo(int32 AmmoAmount)
 {
 	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
-	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->AmmoAmount) return;
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->WeaponAmmoAmount) return;
 	
 	const FString AmmoText = FString::Printf(TEXT("%d"), AmmoAmount);
-	BlasterHUD->GetCharacterOverlay()->AmmoAmount->SetText(FText::FromString(AmmoText));
+	BlasterHUD->GetCharacterOverlay()->WeaponAmmoAmount->SetText(FText::FromString(AmmoText));
+}
+
+void ABlasterPlayerController::UpdateCarriedAmmo(int32 AmmoAmount)
+{
+	// First check the BlasterHUD
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->CarriedAmmoAmount) return;
+	
+	const FString AmmoText = FString::Printf(TEXT("%d"), AmmoAmount);
+	BlasterHUD->GetCharacterOverlay()->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
 }
 
 void ABlasterPlayerController::RefreshHUD()

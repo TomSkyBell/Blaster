@@ -51,6 +51,10 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+
+	// Carried Ammo is correlated with the HUD Ammo, HUD can only be updated on the owning client, so we should declare
+	// the Ammo as COND_OwnerOnly except that the Ammo need shared among the clients.
+	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
 void UCombatComponent::SetWeaponRelatedProperties()
@@ -80,6 +84,12 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// SetOwner() is a replication process, no need to redo it in OnRep.
 	EquippedWeapon->SetOwner(BlasterCharacter);
 	EquippedWeapon->SetHUDAmmo();
+	if (CarriedAmmoMap.Contains(EWeaponType::EWT_AssaultRifle))
+	{
+		CarriedAmmo = CarriedAmmoMap[EWeaponType::EWT_AssaultRifle];
+		BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+		if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
+	}
 
 	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -360,4 +370,11 @@ void UCombatComponent::AimZooming(float DeltaTime)
 	BlasterCharacter->GetFollowCamera()->FieldOfView = InterpFOV;
 }
 
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	if (!BlasterCharacter) return;
+
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
+}
 

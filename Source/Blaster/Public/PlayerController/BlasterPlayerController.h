@@ -24,6 +24,7 @@ public:
 	void UpdatePlayerScore(float Value);
 	void UpdatePlayerDefeats(int32 Value);
 	void UpdateWeaponAmmo(int32 AmmoAmount);
+	void UpdateCarriedAmmo(int32 AmmoAmount);
 	void RefreshHUD();
 
 private:
