@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BlasterTypes/CombatState.h"
 #include "BlasterTypes/TurningInPlace.h"
 #include "Components/TimelineComponent.h"
 #include "GameFramework/Character.h"
 #include "Interface/InteractWithCrosshairsInterface.h"
+#include "Weapon/Weapon.h"
 #include "BlasterCharacter.generated.h"
 
 
@@ -44,6 +46,7 @@ private:
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
 	void PlayFireMontage(bool bAiming) const;
+	void PlayReloadMontage() const;
 	void Eliminated();
 	
 private:
@@ -154,7 +157,7 @@ private:
 	void PlayHitReactMontage() const;
 	void PlayDeathHipMontage() const;
 	void PlayDeathIronMontage() const;
-	void PlayReloadMontage() const;
+	
 
 	/**
 	 *	Dissolve Effect
@@ -189,15 +192,6 @@ private:
 
 	void PlayElimBotEffect();
 
-	/**
-	 * Reload
-	 */
-	UFUNCTION(Server, Reliable)
-	void ServerReloadButtonPressed();
-
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiReloadButtonPressed();
-
 public:
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
@@ -213,4 +207,6 @@ public:
 	FORCEINLINE void SetHealth(const float HealthValue) { Health = HealthValue; }
 	FORCEINLINE void SetMaxHealth(const float MaxHealthValue) { MaxHealth = MaxHealthValue; }
 	FORCEINLINE void SetIsRespawned(bool bIsRespawned) { IsRespawned = bIsRespawned; }
+	ECombatState GetCombatState() const;
+	void SetCombatState(ECombatState State);
 };

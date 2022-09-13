@@ -514,19 +514,11 @@ void ABlasterCharacter::SwitchFireModeButtonPressed()
 
 void ABlasterCharacter::ReloadButtonPressed()
 {
-	ServerReloadButtonPressed();
+	if (Combat)
+	{
+		Combat->ReloadButtonPressed();
+	}
 }
-
-void ABlasterCharacter::ServerReloadButtonPressed_Implementation()
-{
-	MultiReloadButtonPressed();
-}
-
-void ABlasterCharacter::MultiReloadButtonPressed_Implementation()
-{
-	PlayReloadMontage();
-}
-
 
 
 
@@ -634,4 +626,16 @@ bool ABlasterCharacter::IsFireButtonPressed() const
 	return (Combat && Combat->bFireButtonPressed);
 }
 
+ECombatState ABlasterCharacter::GetCombatState() const
+{
+	return Combat ? Combat->GetCombatState() : ECombatState::ECS_MAX;
+}
+
+void ABlasterCharacter::SetCombatState(ECombatState State)
+{
+	if (Combat)
+	{
+		Combat->SetCombatState(State);
+	}
+}
 

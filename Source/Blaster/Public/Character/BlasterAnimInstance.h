@@ -71,4 +71,10 @@ private:
 	FRotator LastFrameLean;
 	FRotator NewFrameLean;
 	FRotator DeltaRotation;
+
+	/**
+	 *	Check if reloading.
+	 */
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bIsReloading;
 };

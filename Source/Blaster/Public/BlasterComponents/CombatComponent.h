@@ -3,7 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "BlasterTypes/CombatState.h"
 #include "Components/ActorComponent.h"
+#include "Weapon/Weapon.h"
 #include "Weapon/WeaponType.h"
 #include "CombatComponent.generated.h"
 
@@ -20,6 +22,8 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
+	FORCEINLINE void SetCombatState(const ECombatState State) { CombatState = State; }
 
 protected:
 	virtual void BeginPlay() override;
@@ -159,4 +163,21 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Ammo)
 	TMap<EWeaponType, int32> CarriedAmmoMap;
+
+	/**
+	 *	Reload
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerReloadButtonPressed();
+	
+	void ReloadButtonPressed();
+
+	/**
+	 *	Combat State
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = OnRep_CombatState)
+	ECombatState CombatState;
+
+	UFUNCTION()
+	void OnRep_CombatState();
 };

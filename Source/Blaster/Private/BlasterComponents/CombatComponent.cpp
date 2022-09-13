@@ -51,6 +51,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	
 	DOREPLIFETIME(UCombatComponent, EquippedWeapon);
 	DOREPLIFETIME(UCombatComponent, bAiming);
+	DOREPLIFETIME(UCombatComponent, CombatState);
 
 	// Carried Ammo is correlated with the HUD Ammo, HUD can only be updated on the owning client, so we should declare
 	// the Ammo as COND_OwnerOnly except that the Ammo need shared among the clients.
@@ -376,5 +377,36 @@ void UCombatComponent::OnRep_CarriedAmmo()
 
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
 	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
+}
+
+void UCombatComponent::ReloadButtonPressed()
+{
+	if (CarriedAmmo <= 0 || CombatState == ECombatState::ECS_Reloading) return;
+
+	ServerReloadButtonPressed();
+}
+
+void UCombatComponent::ServerReloadButtonPressed_Implementation()
+{
+	if (!BlasterCharacter) return;
+	
+	CombatState = ECombatState::ECS_Reloading;
+	BlasterCharacter->PlayReloadMontage();
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	if (!BlasterCharacter) return;
+
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Unoccupied:
+		break;
+	case ECombatState::ECS_Reloading:
+		BlasterCharacter->PlayReloadMontage();
+		break;
+	case ECombatState::ECS_MAX:
+		break;
+	}
 }
 

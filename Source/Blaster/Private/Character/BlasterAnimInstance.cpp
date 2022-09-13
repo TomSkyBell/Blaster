@@ -61,6 +61,8 @@
  	TurningInPlace = BlasterCharacter->GetTuringInPlace();
 
  	RightHandRotation = BlasterCharacter->GetRightHandRotation();
+
+ 	bIsReloading = BlasterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
  	
  }
 
