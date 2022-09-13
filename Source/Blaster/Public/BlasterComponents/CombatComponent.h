@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Weapon/WeaponType.h"
 #include "CombatComponent.generated.h"
 
 #define TRACE_LENGTH 80000.f
@@ -146,4 +147,16 @@ private:
 	 *	Change the cross hair's color when aiming at the enemy.
 	 */
 	FColor CrosshairColor = FColor::White;
+
+	/**
+	 * Carried Ammo
+	 */
+	UPROPERTY(EditAnywhere, Category = Ammo, ReplicatedUsing = OnRep_CarriedAmmo)
+	int32 CarriedAmmo = 0;
+
+	UFUNCTION()
+	void OnRep_CarriedAmmo();
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	TMap<EWeaponType, int32> CarriedAmmoMap;
 };

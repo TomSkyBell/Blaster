@@ -37,7 +37,10 @@ public:
 	class UTextBlock* AmmoText;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* AmmoAmount;
+	class UTextBlock* WeaponAmmoAmount;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* CarriedAmmoAmount;
 	
 public:
 	void DisplayDefeatedMsg(ESlateVisibility Param);
