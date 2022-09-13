@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "WeaponType.h"
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
@@ -52,6 +53,12 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
+
+	/**
+	 *	WeaponType
+	 */
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+	EWeaponType WeaponType;
 
 private:
 	UPROPERTY()
@@ -139,6 +146,8 @@ public:
 	FORCEINLINE float GetCanSemiAutoFire() const { return CanSemiAutoFire; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
+	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+	FORCEINLINE void SetWeaponType(const EWeaponType Type) { WeaponType = Type; }
 
 	/**
 	* Textures for the weapon cross hairs

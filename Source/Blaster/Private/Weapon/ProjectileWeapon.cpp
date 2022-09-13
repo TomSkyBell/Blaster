@@ -6,6 +6,12 @@
 #include "Weapon/Casing.h"
 #include "Weapon/Projectile.h"
 
+AProjectileWeapon::AProjectileWeapon()
+{
+	WeaponType = EWeaponType::EWT_AssaultRifle;
+}
+
+
 void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 {
 	// Common game logic (weapon functionality)

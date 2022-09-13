@@ -15,6 +15,7 @@ class BLASTER_API AProjectileWeapon : public AWeapon
 	GENERATED_BODY()
 
 public:
+	AProjectileWeapon();
 	virtual void Fire(const FVector& TraceHitTarget) override;
 	
 private:

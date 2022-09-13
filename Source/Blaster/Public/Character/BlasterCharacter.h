@@ -39,6 +39,7 @@ private:
 	void FireButtonPressed();
 	void FireButtonReleased();
 	void SwitchFireModeButtonPressed();
+	void ReloadButtonPressed();
 
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
@@ -104,6 +105,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* DeathIronMontage;
 
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ReloadMontage;
+
 	/**
 	 *	Set a threshold between camera and the character to avoid blocking.
 	 */
@@ -150,6 +154,7 @@ private:
 	void PlayHitReactMontage() const;
 	void PlayDeathHipMontage() const;
 	void PlayDeathIronMontage() const;
+	void PlayReloadMontage() const;
 
 	/**
 	 *	Dissolve Effect
@@ -183,6 +188,15 @@ private:
 	USoundBase* ElimBotSound;
 
 	void PlayElimBotEffect();
+
+	/**
+	 * Reload
+	 */
+	UFUNCTION(Server, Reliable)
+	void ServerReloadButtonPressed();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiReloadButtonPressed();
 
 public:
 	bool IsWeaponEquipped() const;

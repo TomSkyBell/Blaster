@@ -325,6 +325,28 @@ void ABlasterCharacter::PlayDeathIronMontage() const
 	}
 }
 
+void ABlasterCharacter::PlayReloadMontage() const
+{
+	if (!Combat || !Combat->EquippedWeapon) return;
+
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance && ReloadMontage)
+	{
+		AnimInstance->Montage_Play(ReloadMontage);
+		FName SectionName;
+		switch (Combat->EquippedWeapon->GetWeaponType())
+		{
+		case EWeaponType::EWT_AssaultRifle:
+			SectionName = FName("AssaultRifle");
+			break;
+		case EWeaponType::EWT_MAX:
+			SectionName = FName("AssaultRifle");
+			break;
+		}
+		AnimInstance->Montage_JumpToSection(SectionName);
+	}
+}
+
 void ABlasterCharacter::UpdateMaterial(float CurveValue)
 {
 	if (!DynamicDissolveMatInst) return;
@@ -377,6 +399,7 @@ void ABlasterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &ThisClass::FireButtonPressed);
 	PlayerInputComponent->BindAction("Fire", IE_Released, this, &ThisClass::FireButtonReleased);
 	PlayerInputComponent->BindAction("SwitchFireMode", IE_Pressed, this, &ThisClass::SwitchFireModeButtonPressed);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ThisClass::ReloadButtonPressed);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &ThisClass::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ThisClass::MoveRight);
@@ -488,6 +511,23 @@ void ABlasterCharacter::SwitchFireModeButtonPressed()
 		Combat->SwitchFireModeButtonPressed();
 	}
 }
+
+void ABlasterCharacter::ReloadButtonPressed()
+{
+	ServerReloadButtonPressed();
+}
+
+void ABlasterCharacter::ServerReloadButtonPressed_Implementation()
+{
+	MultiReloadButtonPressed();
+}
+
+void ABlasterCharacter::MultiReloadButtonPressed_Implementation()
+{
+	PlayReloadMontage();
+}
+
+
 
 
 
