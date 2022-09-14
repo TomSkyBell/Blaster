@@ -98,6 +98,7 @@ private:
 	 *	the timer will not take effect because it's always initialized once the button is pressed.
 	 */
 	bool bRefireCheck = true;
+	bool CanFire() const;
 	void StartFireTimer();
 	void FireTimerFinished();
 	void SwitchFireModeButtonPressed();

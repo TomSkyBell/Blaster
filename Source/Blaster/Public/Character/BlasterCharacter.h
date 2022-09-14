@@ -209,4 +209,5 @@ public:
 	FORCEINLINE void SetIsRespawned(bool bIsRespawned) { IsRespawned = bIsRespawned; }
 	ECombatState GetCombatState() const;
 	void SetCombatState(ECombatState State);
+	void Fire();
 };

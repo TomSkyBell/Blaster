@@ -150,20 +150,6 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	}
 }
 
-// ===============================================================================================================
-// ********************************************  Multicast RPC  **************************************************
-// ===============================================================================================================
-
-// 1. If a client_A is calling ServerRPC, it means the server can know what client_A is doing, but if client_A is not doing locally, the Server
-// won't multicast to Client_A, which means Server screen can display what Client_A is doing, but Client screen won't display unless
-// Client_A itself locally do the work.
-// 2. Likewise, if all the clients do the RPC but not do its work locally, the Server won't multicast to them, so the clients' screen won't
-// display their work, no more to say the clients can know each other's work.
-// 3. If all the clients do their work locally, now the Server and the client itself can know what it's doing, but the clients can't know each
-// other's work, so the MulticastRPC is introduced. The clients just needn't do their own work locally but let the MulticastRPC executed from the
-// Server, so the Server will make all the clients do its own work and other clients' work.
-
-
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
 	// Multicast is invoked from the server, so the function will run on the server and all other clients.
@@ -174,8 +160,11 @@ void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& Trac
 // If this function is invoked from the server, then it will run on the server and all the clients.
 void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& TraceHitTarget)
 {
-	if (!BlasterCharacter || !EquippedWeapon) return;
+	// The replicated variable 'CombatState' should be checked on the server because on the server it's updated
+	// while on the client it may not, which causes some unexpected error.
+	if (!BlasterCharacter || !EquippedWeapon || CombatState != ECombatState::ECS_Unoccupied) return;
 
+	AimFactor += EquippedWeapon->GetRecoilFactor();
 	BlasterCharacter->PlayFireMontage(bAiming);
 	EquippedWeapon->Fire(TraceHitTarget);
 	
@@ -183,9 +172,8 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
-	if (!bRefireCheck || !bFireButtonPressed || !EquippedWeapon || EquippedWeapon->GetAmmo() <= 0) return;
+	if (!CanFire()) return;
 	
-	AimFactor += EquippedWeapon->GetRecoilFactor();
 	ServerFire(HitTarget);
 	if (bAutomaticFire) StartFireTimer();
 }
@@ -196,6 +184,11 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
 	Fire();
+}
+
+bool UCombatComponent::CanFire() const
+{
+	return bRefireCheck && bFireButtonPressed && EquippedWeapon && EquippedWeapon->GetAmmo() > 0;
 }
 
 void UCombatComponent::StartFireTimer()
@@ -219,6 +212,47 @@ void UCombatComponent::SwitchFireModeButtonPressed()
 	if (bAutomaticFire && EquippedWeapon->GetCanSemiAutoFire() ||
 		!bAutomaticFire && EquippedWeapon->GetCanAutoFire())
 			bAutomaticFire = !bAutomaticFire;
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	if (!BlasterCharacter) return;
+
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
+}
+
+void UCombatComponent::ReloadButtonPressed()
+{
+	if (CarriedAmmo <= 0 || CombatState == ECombatState::ECS_Reloading) return;
+
+	ServerReloadButtonPressed();
+}
+
+void UCombatComponent::ServerReloadButtonPressed_Implementation()
+{
+	if (!BlasterCharacter) return;
+	
+	CombatState = ECombatState::ECS_Reloading;
+	BlasterCharacter->PlayReloadMontage();
+}
+
+void UCombatComponent::OnRep_CombatState()
+{
+	if (!BlasterCharacter) return;
+
+	switch (CombatState)
+	{
+	case ECombatState::ECS_Unoccupied:
+		// Fire check is inside the Fire().
+		Fire();
+		break;
+	case ECombatState::ECS_Reloading:
+		BlasterCharacter->PlayReloadMontage();
+		break;
+	case ECombatState::ECS_MAX:
+		break;
+	}
 }
 
 
@@ -370,43 +404,3 @@ void UCombatComponent::AimZooming(float DeltaTime)
 	}
 	BlasterCharacter->GetFollowCamera()->FieldOfView = InterpFOV;
 }
-
-void UCombatComponent::OnRep_CarriedAmmo()
-{
-	if (!BlasterCharacter) return;
-
-	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
-	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
-}
-
-void UCombatComponent::ReloadButtonPressed()
-{
-	if (CarriedAmmo <= 0 || CombatState == ECombatState::ECS_Reloading) return;
-
-	ServerReloadButtonPressed();
-}
-
-void UCombatComponent::ServerReloadButtonPressed_Implementation()
-{
-	if (!BlasterCharacter) return;
-	
-	CombatState = ECombatState::ECS_Reloading;
-	BlasterCharacter->PlayReloadMontage();
-}
-
-void UCombatComponent::OnRep_CombatState()
-{
-	if (!BlasterCharacter) return;
-
-	switch (CombatState)
-	{
-	case ECombatState::ECS_Unoccupied:
-		break;
-	case ECombatState::ECS_Reloading:
-		BlasterCharacter->PlayReloadMontage();
-		break;
-	case ECombatState::ECS_MAX:
-		break;
-	}
-}
-

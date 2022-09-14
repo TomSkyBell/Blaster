@@ -11,9 +11,7 @@ ACasing::ACasing()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	// We don't need to set bReplicates = true, because we spawn it in a multicast way so the machine can locally spawn and see it.
-	// bReplicates = true;
+	bReplicates = true;
 	
 	CasingMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Casing Mesh"));
 	SetRootComponent(CasingMesh);

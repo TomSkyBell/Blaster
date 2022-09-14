@@ -639,3 +639,11 @@ void ABlasterCharacter::SetCombatState(ECombatState State)
 	}
 }
 
+void ABlasterCharacter::Fire()
+{
+	if (Combat)
+	{
+		Combat->Fire();
+	}
+}
+
