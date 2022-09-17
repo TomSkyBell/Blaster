@@ -24,6 +24,10 @@ public:
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	FORCEINLINE void SetCombatState(const ECombatState State) { CombatState = State; }
+	FORCEINLINE bool IsAmmoRunOut() const { return CarriedAmmo <= 0; }
+	
+	// Animation Notify access.
+	void ReloadAnimNotify();
 
 protected:
 	virtual void BeginPlay() override;
@@ -162,6 +166,10 @@ private:
 	UFUNCTION()
 	void OnRep_CarriedAmmo();
 
+	void SetHUDCarriedAmmo();
+	void AccessCarriedAmmoMap();
+	void UpdateCarriedAmmoMap();
+
 	UPROPERTY(EditAnywhere, Category = Ammo)
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
@@ -172,6 +180,8 @@ private:
 	void ServerReloadButtonPressed();
 	
 	void ReloadButtonPressed();
+
+	void Reload();
 
 	/**
 	 *	Combat State

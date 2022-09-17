@@ -85,12 +85,8 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// SetOwner() is a replication process, no need to redo it in OnRep.
 	EquippedWeapon->SetOwner(BlasterCharacter);
 	EquippedWeapon->SetHUDAmmo();
-	if (CarriedAmmoMap.Contains(EWeaponType::EWT_AssaultRifle))
-	{
-		CarriedAmmo = CarriedAmmoMap[EWeaponType::EWT_AssaultRifle];
-		BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
-		if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
-	}
+	AccessCarriedAmmoMap();
+	SetHUDCarriedAmmo();
 
 	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
@@ -193,7 +189,7 @@ bool UCombatComponent::CanFire() const
 
 void UCombatComponent::StartFireTimer()
 {
-	if (!BlasterCharacter) return;
+	if (!BlasterCharacter || !EquippedWeapon) return;
 
 	bRefireCheck = false;
 	BlasterCharacter->GetWorldTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, EquippedWeapon->GetFireRate(), false);
@@ -214,27 +210,96 @@ void UCombatComponent::SwitchFireModeButtonPressed()
 			bAutomaticFire = !bAutomaticFire;
 }
 
-void UCombatComponent::OnRep_CarriedAmmo()
+void UCombatComponent::SetHUDCarriedAmmo()
 {
 	if (!BlasterCharacter) return;
-
+	
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
 	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
 }
 
-void UCombatComponent::ReloadButtonPressed()
+void UCombatComponent::AccessCarriedAmmoMap()
 {
-	if (CarriedAmmo <= 0 || CombatState == ECombatState::ECS_Reloading) return;
+	if (!EquippedWeapon) return;
+	
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+}
 
-	ServerReloadButtonPressed();
+void UCombatComponent::UpdateCarriedAmmoMap()
+{
+	if (!EquippedWeapon) return;
+	
+	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] = CarriedAmmo;
+	}
+}
+
+void UCombatComponent::OnRep_CarriedAmmo()
+{
+	SetHUDCarriedAmmo();
+	UpdateCarriedAmmoMap();
+}
+
+void UCombatComponent::ReloadAnimNotify()
+{
+	if (!BlasterCharacter || !EquippedWeapon) return;
+	
+	if (BlasterCharacter->HasAuthority())
+	{
+		// For all
+		BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
+		Reload();
+
+		// For server content, although Fire() is indeed executed from the server because bFireButtonPressed is not known by the server.
+		// But we still declare IsLocallyControlled() to make it clear that Fire() is called in OnRep_CombatState() and need to be called
+		// on the server again.
+		if (BlasterCharacter->IsLocallyControlled())
+		{
+			Fire();
+			EquippedWeapon->SetHUDAmmo();
+			SetHUDCarriedAmmo();
+			UpdateCarriedAmmoMap();
+		}
+	}
 }
 
 void UCombatComponent::ServerReloadButtonPressed_Implementation()
 {
 	if (!BlasterCharacter) return;
-	
+
+	// CombatState Replication, we put reload logic in AnimMontage's Notify
 	CombatState = ECombatState::ECS_Reloading;
 	BlasterCharacter->PlayReloadMontage();
+}
+
+void UCombatComponent::ReloadButtonPressed()
+{
+	if (IsAmmoRunOut() || CombatState == ECombatState::ECS_Reloading ||
+		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
+
+	ServerReloadButtonPressed();
+}
+
+void UCombatComponent::Reload()
+{
+	if (!EquippedWeapon || !EquippedWeapon->IsAmmoValid()) return;
+	
+	if (CarriedAmmo >= (EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo()))
+	{
+		// Sequence is important
+		CarriedAmmo -= EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo();
+		EquippedWeapon->SetAmmo(EquippedWeapon->GetClipSize());
+	}
+	else
+	{
+		// Sequence is important
+		EquippedWeapon->SetAmmo(EquippedWeapon->GetAmmo() + CarriedAmmo);
+		CarriedAmmo = 0;
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()

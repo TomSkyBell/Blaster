@@ -78,7 +78,6 @@ void AProjectileWeapon::EjectBulletShell()
 						FActorSpawnParameters()
 						);
 			}
-			SpendRound();
 		}
 	}
 }

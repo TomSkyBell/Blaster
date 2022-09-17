@@ -123,6 +123,9 @@ private:
 	UPROPERTY(EditAnywhere, Category = Fire, ReplicatedUsing = OnRep_Ammo)
 	int32 Ammo = 30;
 
+	UPROPERTY(EditAnywhere, Category = Fire)
+	int32 ClipSize = 45;
+
 	UFUNCTION()
 	virtual void OnRep_Ammo();
 
@@ -146,6 +149,11 @@ public:
 	FORCEINLINE float GetCanSemiAutoFire() const { return CanSemiAutoFire; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
+	FORCEINLINE int32 GetClipSize() const { return ClipSize; }
+	FORCEINLINE void SetClipSize(const int32 Size) { ClipSize = Size; }
+	FORCEINLINE bool IsAmmoEmpty() const { return Ammo == 0; }
+	FORCEINLINE bool IsAmmoFull() const { return Ammo == ClipSize; }
+	FORCEINLINE bool IsAmmoValid() const { return Ammo >=0 && ClipSize >= 0 && Ammo <= ClipSize; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 	FORCEINLINE void SetWeaponType(const EWeaponType Type) { WeaponType = Type; }
 

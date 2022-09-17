@@ -2,6 +2,7 @@
 
 
 #include "Notifies/AnimNotifyReload.h"
+#include "BlasterComponents/CombatComponent.h"
 #include "Character/BlasterCharacter.h"
 
 void UAnimNotifyReload::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBase* Animation, const FAnimNotifyEventReference& EventReference)
@@ -9,16 +10,10 @@ void UAnimNotifyReload::Notify(USkeletalMeshComponent* MeshComp, UAnimSequenceBa
 	if (MeshComp && MeshComp->GetAnimInstance())
 	{
 		APawn* PawnOwner = MeshComp->GetAnimInstance()->TryGetPawnOwner();
-		if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PawnOwner))
+		ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(PawnOwner);
+		if (BlasterCharacter && BlasterCharacter->GetCombat())
 		{
-			if (BlasterCharacter->HasAuthority())
-			{
-				// For clients, they do their ServerRPC in OnRep_()
-				BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
-
-				// For the server itself, it solely do a ServerRPC.
-				if (BlasterCharacter->IsLocallyControlled()) BlasterCharacter->Fire();
-			}
+			BlasterCharacter->GetCombat()->ReloadAnimNotify();
 		}
 	}
 }

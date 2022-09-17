@@ -89,6 +89,7 @@ void AWeapon::Fire(const FVector& TraceHitTarget)
 	{
 		WeaponMesh->PlayAnimation(FireAnimation, false);
 	}
+	SpendRound();
 }
 
 void AWeapon::SetWeaponState(EWeaponState State)
