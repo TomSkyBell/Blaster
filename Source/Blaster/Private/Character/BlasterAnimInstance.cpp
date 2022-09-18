@@ -62,7 +62,8 @@
 
  	RightHandRotation = BlasterCharacter->GetRightHandRotation();
 
- 	bIsReloading = BlasterCharacter->GetCombatState() == ECombatState::ECS_Reloading;
- 	
+ 	bUseFABRIK = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+ 	bUseAimOffset = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
+ 	bTransformRightHand = BlasterCharacter->GetCombatState() != ECombatState::ECS_Reloading;
  }
 

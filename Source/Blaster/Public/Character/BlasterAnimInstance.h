@@ -76,5 +76,11 @@ private:
 	 *	Check if reloading.
 	 */
 	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
-	bool bIsReloading;
+	bool bUseFABRIK;
+
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bUseAimOffset;
+
+	UPROPERTY(BlueprintReadOnly, Category = Combat, meta = (AllowPrivateAccess = "true"))
+	bool bTransformRightHand;
 };
