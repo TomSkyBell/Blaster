@@ -181,4 +181,10 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Crosshairs)
 	float CrosshairsMinSpread;
+
+	/**
+	 *	Weapon's sound effect when equipped
+	 */
+	UPROPERTY(EditAnywhere, Category = SoundEffect)
+	USoundBase* EquippedSound;
 };

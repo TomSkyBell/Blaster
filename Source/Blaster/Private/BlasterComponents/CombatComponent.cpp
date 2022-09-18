@@ -88,6 +88,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	AccessCarriedAmmoMap();
 	SetHUDCarriedAmmo();
 
+	if (BlasterCharacter->IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquippedSound, BlasterCharacter->GetActorLocation(), FRotator::ZeroRotator);
+	}
+	
 	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
@@ -117,6 +122,11 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	}
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
+
+	if (BlasterCharacter->IsLocallyControlled())
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquippedSound, BlasterCharacter->GetActorLocation(), FRotator::ZeroRotator);
+	}
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)
@@ -278,7 +288,7 @@ void UCombatComponent::ServerReloadButtonPressed_Implementation()
 
 void UCombatComponent::ReloadButtonPressed()
 {
-	if (IsAmmoRunOut() || CombatState == ECombatState::ECS_Reloading ||
+	if (IsCarriedAmmoEmpty() || CombatState == ECombatState::ECS_Reloading ||
 		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
 
 	ServerReloadButtonPressed();
