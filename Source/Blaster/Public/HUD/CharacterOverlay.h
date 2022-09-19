@@ -43,7 +43,10 @@ public:
 	class UTextBlock* CarriedAmmoAmount;
 
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* WeaponTypeText;
+	class UTextBlock* WeaponType;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* MatchCountdown;
 	
 public:
 	void DisplayDefeatedMsg(ESlateVisibility Param);

@@ -17,6 +17,7 @@ class BLASTER_API ABlasterPlayerController : public APlayerController
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void OnPossess(APawn* InPawn) override;
 	
 public:
@@ -25,11 +26,16 @@ public:
 	void UpdatePlayerDefeats(int32 Value);
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
-	void UpdateWeaponType(FString WeaponType);
+	void UpdateWeaponType(const FString& WeaponType);
+	void UpdateMatchCountDown(float Countdown);
+	void SetHUDTime();
 	void RefreshHUD();
 
 private:
 	UPROPERTY()
 	class ABlasterHUD* BlasterHUD;
+
+	float MatchTime = 130.f;
+	int32 CountdownInt = 0;
 	
 };
