@@ -260,20 +260,22 @@ void UCombatComponent::ReloadAnimNotify()
 	
 	if (BlasterCharacter->HasAuthority())
 	{
-		// For all
 		BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
-		Reload();
+		ReloadAmmoAmount();
+		Fire();
+		
+		EquippedWeapon->SetHUDAmmo();
+		SetHUDCarriedAmmo();
 
-		// For server content, although Fire() is indeed executed from the server because bFireButtonPressed is not known by the server.
-		// But we still declare IsLocallyControlled() to make it clear that Fire() is called in OnRep_CombatState() and need to be called
-		// on the server again.
-		if (BlasterCharacter->IsLocallyControlled())
-		{
-			Fire();
-			EquippedWeapon->SetHUDAmmo();
-			SetHUDCarriedAmmo();
-			UpdateCarriedAmmoMap();
-		}
+		/**************************************  Simulation On Server  ****************************************/
+		// At the start of the game, the simulated proxy on the server, which means server does the simulation
+		// for the working of this proxy, will transmit the same data as the owning client of this proxy. But
+		// with the time advances, these two(owning client and the simulated client on the server) have the different
+		// data, for instance when we press the button on the owning client, the server won't know about it, when we
+		// are doing the replication on the server, the OnRep_ only work on the clients, and the simulated proxy's data
+		// won't simultaneously updated with the clients, so the server won't know about the change, which will lead
+		// to a wrong simulation, that's why we do the same work of OnRep_ on the server.
+		UpdateCarriedAmmoMap();
 	}
 }
 
@@ -294,7 +296,7 @@ void UCombatComponent::ReloadButtonPressed()
 	ServerReloadButtonPressed();
 }
 
-void UCombatComponent::Reload()
+void UCombatComponent::ReloadAmmoAmount()
 {
 	if (!EquippedWeapon || !EquippedWeapon->IsAmmoValid()) return;
 	

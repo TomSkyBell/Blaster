@@ -181,7 +181,7 @@ private:
 	
 	void ReloadButtonPressed();
 
-	void Reload();
+	void ReloadAmmoAmount();
 
 	/**
 	 *	Combat State
