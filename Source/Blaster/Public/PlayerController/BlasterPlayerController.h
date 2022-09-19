@@ -25,6 +25,7 @@ public:
 	void UpdatePlayerDefeats(int32 Value);
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
+	void UpdateWeaponType(FString WeaponType);
 	void RefreshHUD();
 
 private:

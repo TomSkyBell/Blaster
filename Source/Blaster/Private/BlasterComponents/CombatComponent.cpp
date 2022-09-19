@@ -87,6 +87,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	EquippedWeapon->SetHUDAmmo();
 	AccessCarriedAmmoMap();
 	SetHUDCarriedAmmo();
+	SetHUDWeaponType();
 
 	if (BlasterCharacter->IsLocallyControlled())
 	{
@@ -123,6 +124,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
 
+	SetHUDWeaponType();
 	if (BlasterCharacter->IsLocallyControlled())
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquippedSound, BlasterCharacter->GetActorLocation(), FRotator::ZeroRotator);
@@ -251,6 +253,24 @@ void UCombatComponent::UpdateCarriedAmmoMap()
 	{
 		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] = CarriedAmmo;
 	}
+}
+
+void UCombatComponent::SetHUDWeaponType()
+{
+	if (!BlasterCharacter || !EquippedWeapon) return;
+
+	FString WeaponType;
+	switch(EquippedWeapon->GetWeaponType())
+	{
+	case EWeaponType::EWT_AssaultRifle:
+		WeaponType = FString("Assault Rifle");
+		break;
+	case EWeaponType::EWT_MAX:
+		WeaponType = FString("");
+		break;
+	}
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->Controller);
+	if (BlasterPlayerController) BlasterPlayerController->UpdateWeaponType(WeaponType);
 }
 
 void UCombatComponent::OnRep_CarriedAmmo()

@@ -169,6 +169,7 @@ private:
 	void SetHUDCarriedAmmo();
 	void AccessCarriedAmmoMap();
 	void UpdateCarriedAmmoMap();
+	void SetHUDWeaponType();
 
 	UPROPERTY(EditAnywhere, Category = Ammo)
 	TMap<EWeaponType, int32> CarriedAmmoMap;

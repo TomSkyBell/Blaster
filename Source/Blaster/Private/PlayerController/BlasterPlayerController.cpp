@@ -37,7 +37,6 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 
 void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->HealthBar ||
 		!BlasterHUD->GetCharacterOverlay()->HealthText) return;
@@ -49,7 +48,6 @@ void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
 
 void ABlasterPlayerController::UpdatePlayerScore(float Value)
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->Score) return;
 	
@@ -59,7 +57,6 @@ void ABlasterPlayerController::UpdatePlayerScore(float Value)
 
 void ABlasterPlayerController::UpdatePlayerDefeats(int32 Value)
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->Defeats) return;
 	
@@ -70,7 +67,6 @@ void ABlasterPlayerController::UpdatePlayerDefeats(int32 Value)
 
 void ABlasterPlayerController::UpdateWeaponAmmo(int32 AmmoAmount)
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->WeaponAmmoAmount) return;
 	
@@ -80,7 +76,6 @@ void ABlasterPlayerController::UpdateWeaponAmmo(int32 AmmoAmount)
 
 void ABlasterPlayerController::UpdateCarriedAmmo(int32 AmmoAmount)
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->CarriedAmmoAmount) return;
 	
@@ -88,9 +83,16 @@ void ABlasterPlayerController::UpdateCarriedAmmo(int32 AmmoAmount)
 	BlasterHUD->GetCharacterOverlay()->CarriedAmmoAmount->SetText(FText::FromString(AmmoText));
 }
 
+void ABlasterPlayerController::UpdateWeaponType(FString WeaponType)
+{
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->WeaponTypeText) return;
+	
+	BlasterHUD->GetCharacterOverlay()->WeaponTypeText->SetText(FText::FromString(WeaponType));
+}
+
 void ABlasterPlayerController::RefreshHUD()
 {
-	// First check the BlasterHUD
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay()) return;
 	
