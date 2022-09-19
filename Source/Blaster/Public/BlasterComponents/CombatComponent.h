@@ -24,7 +24,7 @@ public:
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	FORCEINLINE void SetCombatState(const ECombatState State) { CombatState = State; }
-	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo == 0; }
+	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo <= 0; }
 	
 	// Animation Notify access.
 	void ReloadAnimNotify();
@@ -177,9 +177,9 @@ private:
 	 *	Reload
 	 */
 	UFUNCTION(Server, Reliable)
-	void ServerReloadButtonPressed();
+	void ServerReload();
 	
-	void ReloadButtonPressed();
+	void Reload();
 
 	void ReloadAmmoAmount();
 

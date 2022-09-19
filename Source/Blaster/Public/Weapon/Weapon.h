@@ -151,7 +151,7 @@ public:
 	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
 	FORCEINLINE int32 GetClipSize() const { return ClipSize; }
 	FORCEINLINE void SetClipSize(const int32 Size) { ClipSize = Size; }
-	FORCEINLINE bool IsAmmoEmpty() const { return Ammo == 0; }
+	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }
 	FORCEINLINE bool IsAmmoFull() const { return Ammo == ClipSize; }
 	FORCEINLINE bool IsAmmoValid() const { return Ammo >=0 && ClipSize >= 0 && Ammo <= ClipSize; }
 	FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }

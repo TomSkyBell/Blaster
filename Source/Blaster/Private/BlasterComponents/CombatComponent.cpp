@@ -178,10 +178,15 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
-	if (!CanFire()) return;
-	
-	ServerFire(HitTarget);
-	if (bAutomaticFire) StartFireTimer();
+	if (CanFire())
+	{
+		ServerFire(HitTarget);
+		StartFireTimer();
+	}
+	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
 }
 
 void UCombatComponent::FireButtonPressed(bool bPressed)
@@ -189,12 +194,12 @@ void UCombatComponent::FireButtonPressed(bool bPressed)
 	// Everytime we call the RPC, the data will be sent across the network. And with multiplayer game, the less data we sent, the better.
 	// It's only for things which are very important in the game such as shooting will need RPC.
 	bFireButtonPressed = bPressed;
-	Fire();
+	if (bFireButtonPressed) Fire();
 }
 
 bool UCombatComponent::CanFire() const
 {
-	return bRefireCheck && bFireButtonPressed && EquippedWeapon && EquippedWeapon->GetAmmo() > 0;
+	return bRefireCheck && EquippedWeapon && !EquippedWeapon->IsAmmoEmpty();
 }
 
 void UCombatComponent::StartFireTimer()
@@ -208,7 +213,7 @@ void UCombatComponent::StartFireTimer()
 void UCombatComponent::FireTimerFinished()
 {
 	bRefireCheck = true;
-	Fire();
+	if (bAutomaticFire && bFireButtonPressed) Fire();
 }
 
 void UCombatComponent::SwitchFireModeButtonPressed()
@@ -258,42 +263,45 @@ void UCombatComponent::ReloadAnimNotify()
 {
 	if (!BlasterCharacter || !EquippedWeapon) return;
 	
-	if (BlasterCharacter->HasAuthority())
-	{
-		BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
-		ReloadAmmoAmount();
-		Fire();
-		
-		EquippedWeapon->SetHUDAmmo();
-		SetHUDCarriedAmmo();
+	/***************************************  Replciation Problem  ****************************************/
+	// Normally, we should put these in the HasAuthority() check, and using the replication to make the clients
+	// do the work, but it will cause the replicating delay problem, for instance, the HUD cannot display the ammo
+	// amount correctly (still don't know why) and when we fire(), we need to check the weapon ammo ?= 0, but
+	// the ammo may not be updated due to the replicating delay, leading to the failure in fire(), so we take the
+	// action to do it locally again instead of just waiting for the unstable replication.
+	BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
+	ReloadAmmoAmount();
+	
+	EquippedWeapon->SetHUDAmmo();
+	SetHUDCarriedAmmo();
 
-		/**************************************  Simulation On Server  ****************************************/
-		// At the start of the game, the simulated proxy on the server, which means server does the simulation
-		// for the working of this proxy, will transmit the same data as the owning client of this proxy. But
-		// with the time advances, these two(owning client and the simulated client on the server) have the different
-		// data, for instance when we press the button on the owning client, the server won't know about it, when we
-		// are doing the replication on the server, the OnRep_ only work on the clients, and the simulated proxy's data
-		// won't simultaneously updated with the clients, so the server won't know about the change, which will lead
-		// to a wrong simulation, that's why we do the same work of OnRep_ on the server.
-		UpdateCarriedAmmoMap();
-	}
+	/**************************************  Simulation On Server  ****************************************/
+	// At the start of the game, the simulated proxy on the server, which means server does the simulation
+	// for the working of this proxy, will transmit the same data as the owning client of this proxy. But
+	// with the time advances, these two(owning client and the simulated client on the server) have the different
+	// data, for instance when we press the button on the owning client, the server won't know about it, when we
+	// are doing the replication on the server, the OnRep_ only work on the clients, and the simulated proxy's data
+	// won't simultaneously updated with the clients, so the server won't know about the change, which will lead
+	// to a wrong simulation, that's why we do the same work of OnRep_ on the server.
+	UpdateCarriedAmmoMap();
+	
+	// bFireButtonPressed can only be accessed through the owning client, so it doesn't have to be in HasAuthority().
+	if (bFireButtonPressed) Fire();
 }
 
-void UCombatComponent::ServerReloadButtonPressed_Implementation()
+void UCombatComponent::ServerReload_Implementation()
 {
-	if (!BlasterCharacter) return;
+	if (!BlasterCharacter || IsCarriedAmmoEmpty() || CombatState == ECombatState::ECS_Reloading ||
+		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
 
 	// CombatState Replication, we put reload logic in AnimMontage's Notify
 	CombatState = ECombatState::ECS_Reloading;
 	BlasterCharacter->PlayReloadMontage();
 }
 
-void UCombatComponent::ReloadButtonPressed()
+void UCombatComponent::Reload()
 {
-	if (IsCarriedAmmoEmpty() || CombatState == ECombatState::ECS_Reloading ||
-		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
-
-	ServerReloadButtonPressed();
+	ServerReload();
 }
 
 void UCombatComponent::ReloadAmmoAmount()
@@ -321,8 +329,6 @@ void UCombatComponent::OnRep_CombatState()
 	switch (CombatState)
 	{
 	case ECombatState::ECS_Unoccupied:
-		// Fire check is inside the Fire().
-		Fire();
 		break;
 	case ECombatState::ECS_Reloading:
 		BlasterCharacter->PlayReloadMontage();

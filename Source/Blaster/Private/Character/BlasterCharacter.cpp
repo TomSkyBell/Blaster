@@ -516,7 +516,7 @@ void ABlasterCharacter::ReloadButtonPressed()
 {
 	if (Combat)
 	{
-		Combat->ReloadButtonPressed();
+		Combat->Reload();
 	}
 }
 
