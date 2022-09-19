@@ -1,8 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "PlayerController/BlasterPlayerController.h"
-
 #include "Character/BlasterCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
@@ -22,6 +20,8 @@ void ABlasterPlayerController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	SetHUDTime();
+
+	CheckTimeSync(DeltaTime);
 }
 
 void ABlasterPlayerController::OnPossess(APawn* InPawn)
@@ -40,6 +40,13 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 		BlasterCharacter->SetIsRespawned(true);
 		RefreshHUD();
 	}
+}
+
+void ABlasterPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
+
+	if (IsLocalController()) RequestServerTimeFromClient(GetWorld()->GetTimeSeconds());
 }
 
 void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
@@ -111,7 +118,7 @@ void ABlasterPlayerController::UpdateMatchCountDown(float Countdown)
 
 void ABlasterPlayerController::SetHUDTime()
 {
-	const int32 SecondsLeft = MatchTime - GetWorld()->GetTimeSeconds();
+	const int32 SecondsLeft = MatchTime - GetServerTime();
 	if (SecondsLeft != CountdownInt) UpdateMatchCountDown(SecondsLeft);
 	CountdownInt = SecondsLeft;
 }
@@ -125,3 +132,25 @@ void ABlasterPlayerController::RefreshHUD()
 	UpdatePlayerHealth(100.f, 100.f);
 }
 
+void ABlasterPlayerController::RequestServerTimeFromClient_Implementation(float ClientRequestTime)
+{
+	ReportServerTimeToClient(ClientRequestTime, GetWorld()->GetTimeSeconds());
+}
+
+void ABlasterPlayerController::ReportServerTimeToClient_Implementation(float ClientRequestTime, float ServerReportTime)
+{
+	const float CurrClientTime = GetWorld()->GetTimeSeconds();
+	const float TripRound = CurrClientTime - ClientRequestTime;
+	const float CurrServerTime = ServerReportTime + 0.5f * TripRound;
+	SyncDiffTime = CurrServerTime - CurrClientTime;
+}
+
+void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
+{
+	SyncRunningTime += DeltaTime;
+	if (IsLocalController() && SyncRunningTime > SyncFreq)
+	{
+		RequestServerTimeFromClient(GetWorld()->GetTimeSeconds());
+		SyncRunningTime = 0.f;
+	}
+}
