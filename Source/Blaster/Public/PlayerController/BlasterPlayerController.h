@@ -18,7 +18,9 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
 	virtual void OnPossess(APawn* InPawn) override;
-	virtual void ReceivedPlayer() override;		// Called when net connection is created.
+	/** Called when net connection is created. */
+	virtual void ReceivedPlayer() override;		
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 public:
 	void UpdatePlayerHealth(float Health, float MaxHealth);
@@ -30,6 +32,9 @@ public:
 	void UpdateMatchCountDown(float Countdown);
 	void SetHUDTime();
 	void RefreshHUD();
+
+	/** Once the game mode's MatchState is changed, the player controller's MatchState callback is going to be executed. */
+	void OnMatchStateSet(FName State);
 
 private:
 	UPROPERTY()
@@ -59,5 +64,11 @@ private:
 	 */ 
 	float MatchTime = 130.f;
 	int32 CountdownInt = 0;
-	
+
+	/** Match State, once the game mode's match state is changed, the player controller will respond */
+	UPROPERTY(EditDefaultsOnly, ReplicatedUsing = OnRep_MatchState, Category = Match)
+	FName MatchState;
+
+	UFUNCTION()
+	void OnRep_MatchState();
 };

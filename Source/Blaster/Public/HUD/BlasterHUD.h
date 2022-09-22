@@ -20,7 +20,8 @@ public:
 	FORCEINLINE void SetHUDPackage(FHUDPackage Package) { HUDPackage = Package; }
 	FORCEINLINE void SetHUDSpread(float Spread) { HUDPackage.CrosshairsCurrentSpread = Spread; }
 	FORCEINLINE class UCharacterOverlay* GetCharacterOverlay() const { return CharacterOverlay; }
-
+	void AddCharacterOverlay();
+	
 protected:
 	virtual void BeginPlay() override;
 	
@@ -33,7 +34,6 @@ private:
 
 	UPROPERTY()
 	class UCharacterOverlay* CharacterOverlay;
-	void AddCharacterOverlay();
 	
 	/**
 	 *	Draw HUD cross hairs

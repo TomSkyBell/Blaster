@@ -4,8 +4,10 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
+#include "GameFramework/GameMode.h"
 #include "HUD/BlasterHUD.h"
 #include "HUD/CharacterOverlay.h"
+#include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::BeginPlay()
 {
@@ -47,6 +49,13 @@ void ABlasterPlayerController::ReceivedPlayer()
 	Super::ReceivedPlayer();
 
 	if (IsLocalController()) RequestServerTimeFromClient(GetWorld()->GetTimeSeconds());
+}
+
+void ABlasterPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ABlasterPlayerController, MatchState, COND_OwnerOnly);
 }
 
 void ABlasterPlayerController::UpdatePlayerHealth(float Health, float MaxHealth)
@@ -130,6 +139,25 @@ void ABlasterPlayerController::RefreshHUD()
 	
 	BlasterHUD->GetCharacterOverlay()->DisplayDefeatedMsg(ESlateVisibility::Hidden);
 	UpdatePlayerHealth(100.f, 100.f);
+}
+
+void ABlasterPlayerController::OnMatchStateSet(FName State)
+{
+	MatchState = State;
+	if (MatchState == MatchState::InProgress)
+	{
+		BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+		if (BlasterHUD) BlasterHUD->AddCharacterOverlay();
+	}
+}
+
+void ABlasterPlayerController::OnRep_MatchState()
+{
+	if (MatchState == MatchState::InProgress)
+	{
+		BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+		if (BlasterHUD) BlasterHUD->AddCharacterOverlay();
+	}	
 }
 
 void ABlasterPlayerController::RequestServerTimeFromClient_Implementation(float ClientRequestTime)
