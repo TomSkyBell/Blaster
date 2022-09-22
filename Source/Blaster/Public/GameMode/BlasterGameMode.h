@@ -25,13 +25,22 @@ protected:
 	virtual void OnMatchStateSet() override;
 	
 private:
-	/** Warmup time*/
-	UPROPERTY(EditDefaultsOnly)
-	float WarmupTime = 10.f;
-
-	/** Countdown time since the players have entered the map*/
-	float CountdownTime = 10.f;
-
 	/** The time cost for entering the map */
 	float LevelStartingTime = 0.f;
+	
+	/** Warmup time before starting the game */
+	UPROPERTY(EditDefaultsOnly, Category = Match)
+	float WarmupTime = 10.f;
+
+	/** Match time when MatchState is InProgress */
+	UPROPERTY(EditDefaultsOnly, Category = Match)
+	float MatchTime = 120.f;
+
+	/** Countdown time since the players have entered the map */
+	float CountdownTime = 10.f;
+
+public:
+	FORCEINLINE float GetLevelStartingTime() const { return LevelStartingTime; }
+	FORCEINLINE float GetWarmupTime() const { return WarmupTime; }
+	FORCEINLINE float GetMatchTime() const { return MatchTime; }
 };

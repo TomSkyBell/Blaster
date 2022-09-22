@@ -5,9 +5,11 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "GameMode/BlasterGameMode.h"
 #include "HUD/AnnouncementWidget.h"
 #include "HUD/BlasterHUD.h"
 #include "HUD/CharacterOverlay.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 void ABlasterPlayerController::BeginPlay()
@@ -16,6 +18,7 @@ void ABlasterPlayerController::BeginPlay()
 
 	BlasterHUD = Cast<ABlasterHUD>(GetHUD());
 	
+	ServerCheckMatchState();
 }
 
 void ABlasterPlayerController::Tick(float DeltaTime)
@@ -110,6 +113,17 @@ void ABlasterPlayerController::UpdateWeaponType(const FString& WeaponType)
 	BlasterHUD->GetCharacterOverlay()->WeaponType->SetText(FText::FromString(WeaponType));
 }
 
+void ABlasterPlayerController::UpdateWarmupCountdown(float Countdown)
+{
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetAnnouncement() || !BlasterHUD->GetAnnouncement()->WarmupTimeText) return;
+
+	const int32 Minute = FMath::FloorToInt32(Countdown / 60.f);
+	const int32 Second = Countdown - 60 * Minute;
+	const FString WarmupString = FString::Printf(TEXT("%02d:%02d"), Minute, Second);
+	BlasterHUD->GetAnnouncement()->WarmupTimeText->SetText(FText::FromString(WarmupString));
+}
+
 void ABlasterPlayerController::UpdateMatchCountDown(float Countdown)
 {
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
@@ -123,8 +137,27 @@ void ABlasterPlayerController::UpdateMatchCountDown(float Countdown)
 
 void ABlasterPlayerController::SetHUDTime()
 {
-	const int32 SecondsLeft = MatchTime - GetServerTime();
-	if (SecondsLeft != CountdownInt) UpdateMatchCountDown(SecondsLeft);
+	float TimeLeft = 0.f;
+	if (MatchState == MatchState::WaitingToStart)
+	{
+		TimeLeft = WarmupTime - GetServerTime() + LevelStartingTime;
+	}
+	else if (MatchState == MatchState::InProgress)
+	{
+		TimeLeft = WarmupTime + MatchTime - GetServerTime() + LevelStartingTime;
+	}
+	const int32 SecondsLeft = FMath::CeilToInt32(TimeLeft);
+	if (SecondsLeft != CountdownInt)
+	{
+		if (MatchState == MatchState::WaitingToStart)
+		{
+			UpdateWarmupCountdown(SecondsLeft);
+		}
+		else if (MatchState == MatchState::InProgress)
+		{
+			UpdateMatchCountDown(SecondsLeft);
+		}
+	}
 	CountdownInt = SecondsLeft;
 }
 
@@ -182,4 +215,24 @@ void ABlasterPlayerController::CheckTimeSync(float DeltaTime)
 		RequestServerTimeFromClient(GetWorld()->GetTimeSeconds());
 		SyncRunningTime = 0.f;
 	}
+}
+
+void ABlasterPlayerController::ServerCheckMatchState_Implementation()
+{
+	const ABlasterGameMode* BlasterGameMode = Cast<ABlasterGameMode>(GetWorld()->GetAuthGameMode());
+	if (!BlasterGameMode) return;
+	
+	ClientJoinMidGame(BlasterGameMode->GetLevelStartingTime(), BlasterGameMode->GetWarmupTime(), BlasterGameMode->GetMatchTime(), BlasterGameMode->GetMatchState());
+}
+
+void ABlasterPlayerController::ClientJoinMidGame_Implementation(float LevelStarting, float Warmup, float Match, FName State)
+{
+	LevelStartingTime = LevelStarting;
+	WarmupTime = Warmup;
+	MatchTime = Match;
+	MatchState = State;
+	
+	// If the player is joining mid-game and the game is now in progress, the UI should switch to the MatchState's UI, so the
+	// player should be notified which game state is now going on.
+	OnMatchStateSet(MatchState);
 }

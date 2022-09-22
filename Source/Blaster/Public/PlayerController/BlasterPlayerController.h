@@ -29,7 +29,11 @@ public:
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
 	void UpdateWeaponType(const FString& WeaponType);
+	/** Update the warmup time before matching */
+	void UpdateWarmupCountdown(float Countdown);
+	/** Update the match time after matching */
 	void UpdateMatchCountDown(float Countdown);
+	/** Set the warmup time, match time, ...etc each frame */
 	void SetHUDTime();
 	void RefreshHUD();
 
@@ -58,15 +62,21 @@ private:
 	
 	float SyncDiffTime = 0.f;
 	float SyncRunningTime = 0.f;
+
+	/** Level starting time, MatchState on GameMode is EnteringMap */
+	float LevelStartingTime = 0.f;
+
+	/** Warmup time, MatchState on GameMode is WaitingToStart */
+	float WarmupTime = 0.f;
 	
-	/**
-	 * Match
-	 */ 
-	float MatchTime = 130.f;
+	/** Match time, MatchState on GameMode is InProgress */
+	float MatchTime = 0.f;
+
+	/** Help to distinguish 2 time seconds in the unit of integer when ticking */
 	int32 CountdownInt = 0;
 
 	/** Match State, once the game mode's match state is changed, the player controller will respond */
-	UPROPERTY(EditDefaultsOnly, ReplicatedUsing = OnRep_MatchState, Category = Match)
+	UPROPERTY(ReplicatedUsing = OnRep_MatchState)
 	FName MatchState;
 
 	UFUNCTION()
@@ -74,4 +84,12 @@ private:
 
 	/** Handle the common functionality on replication about starting match */
 	void HandleMatchHasStarted();
+
+	/** Request the server to get the warmup time, match time, level starting time and match state once the player joins mid-game */
+	UFUNCTION(Server, Reliable)
+	void ServerCheckMatchState();
+
+	/** Instead of RepNotify, we use a client RPC to transmit the data from the server to the requesting client */
+	UFUNCTION(Client, Reliable)
+	void ClientJoinMidGame(float LevelStarting, float Warmup, float Match, FName State);
 };

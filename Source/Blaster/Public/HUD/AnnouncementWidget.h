@@ -16,5 +16,5 @@ class BLASTER_API UAnnouncementWidget : public UUserWidget
 	
 public:
 	UPROPERTY(meta = (BindWidget))
-	class UTextBlock* WarmupTime;
+	class UTextBlock* WarmupTimeText;
 };
