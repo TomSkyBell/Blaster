@@ -71,4 +71,7 @@ private:
 
 	UFUNCTION()
 	void OnRep_MatchState();
+
+	/** Handle the common functionality on replication about starting match */
+	void HandleMatchHasStarted();
 };

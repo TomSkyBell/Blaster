@@ -5,6 +5,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "HUD/AnnouncementWidget.h"
 #include "HUD/BlasterHUD.h"
 #include "HUD/CharacterOverlay.h"
 #include "Net/UnrealNetwork.h"
@@ -32,13 +33,8 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	
 	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(InPawn))
 	{
-		//   OnPossess is not implemented on each owning client and server though it's indeed visually destroyed on each machine,
-		// but logically it's destroyed and respawned on the server.
-		//   Besides, OnPossess is not a multicast, so once the pawn is destroyed and respawned on the server, the destroyed and
-		// respawned can take effect on the clients as well, but as for the OnPossess, it could only be done on the server.
-		//   Something to note is that OnPossess() is executed after the constructor, so if we set IsRespawned as false in default
-		// once the pawn is constructed, then OnPossess will make it true and the RepNotify will work. In this way, we don't need
-		// to recover the replicated value to be false.
+		// OnPossess() is only executed from the server, so we make a replicated variable IsRespawned to make each controller's
+		// HUD be refreshed since respawned.
 		BlasterCharacter->SetIsRespawned(true);
 		RefreshHUD();
 	}
@@ -144,19 +140,24 @@ void ABlasterPlayerController::RefreshHUD()
 void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
-	if (MatchState == MatchState::InProgress)
-	{
-		BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
-		if (BlasterHUD) BlasterHUD->AddCharacterOverlay();
-	}
+	HandleMatchHasStarted();
 }
 
 void ABlasterPlayerController::OnRep_MatchState()
 {
+	HandleMatchHasStarted();
+}
+
+void ABlasterPlayerController::HandleMatchHasStarted()
+{
 	if (MatchState == MatchState::InProgress)
 	{
 		BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
-		if (BlasterHUD) BlasterHUD->AddCharacterOverlay();
+		if (BlasterHUD)
+		{
+			BlasterHUD->AddCharacterOverlay();
+			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}	
 }
 

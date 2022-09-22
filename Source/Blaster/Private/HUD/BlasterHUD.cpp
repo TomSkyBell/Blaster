@@ -6,6 +6,7 @@
 #include "Components/TextBlock.h"
 #include "HUD/CharacterOverlay.h"
 #include "GameFramework/PlayerController.h"
+#include "HUD/AnnouncementWidget.h"
 
 // The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
 void ABlasterHUD::DrawHUD()
@@ -28,6 +29,8 @@ void ABlasterHUD::DrawHUD()
 void ABlasterHUD::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AddAnnouncement();
 }
 
 void ABlasterHUD::AddCharacterOverlay()
@@ -39,6 +42,18 @@ void ABlasterHUD::AddCharacterOverlay()
 		if (!CharacterOverlay) return;
 		
 		CharacterOverlay->AddToViewport();
+	}
+}
+
+void ABlasterHUD::AddAnnouncement()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if (PlayerController && AnnouncementClass)
+	{
+		Announcement = CreateWidget<UAnnouncementWidget, APlayerController>(PlayerController, AnnouncementClass, FName("Announcement"));
+		if (!Announcement) return;
+		
+		Announcement->AddToViewport();
 	}
 }
 
