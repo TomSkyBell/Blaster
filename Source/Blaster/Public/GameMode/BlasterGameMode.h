@@ -6,6 +6,12 @@
 #include "GameFramework/GameMode.h"
 #include "BlasterGameMode.generated.h"
 
+/** Add a new custom match state in the GameMode */
+namespace MatchState
+{
+	extern const FName Cooldown;
+}
+
 /**
  * 
  */
@@ -34,7 +40,11 @@ private:
 
 	/** Match time when MatchState is InProgress */
 	UPROPERTY(EditDefaultsOnly, Category = Match)
-	float MatchTime = 120.f;
+	float MatchTime = 10.f;
+
+	/** Cooldown time when MatchState is InProgress and the match countdown has finished */
+	UPROPERTY(EditDefaultsOnly, Category = Match)
+	float CooldownTime = 10.f;
 
 	/** Countdown time since the players have entered the map */
 	float CountdownTime = 10.f;
@@ -43,4 +53,5 @@ public:
 	FORCEINLINE float GetLevelStartingTime() const { return LevelStartingTime; }
 	FORCEINLINE float GetWarmupTime() const { return WarmupTime; }
 	FORCEINLINE float GetMatchTime() const { return MatchTime; }
+	FORCEINLINE float GetCooldownTime() const { return CooldownTime; }
 };

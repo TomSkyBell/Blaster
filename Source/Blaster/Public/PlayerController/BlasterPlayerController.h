@@ -29,10 +29,10 @@ public:
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
 	void UpdateWeaponType(const FString& WeaponType);
-	/** Update the warmup time before matching */
-	void UpdateWarmupCountdown(float Countdown);
+	/** Update the warmup time before matching or update the cooldown time after the match has finished */
+	void UpdateAnnouncement(int32 Countdown);
 	/** Update the match time after matching */
-	void UpdateMatchCountDown(float Countdown);
+	void UpdateMatchCountDown(int32 Countdown);
 	/** Set the warmup time, match time, ...etc each frame */
 	void SetHUDTime();
 	void RefreshHUD();
@@ -72,6 +72,9 @@ private:
 	/** Match time, MatchState on GameMode is InProgress */
 	float MatchTime = 0.f;
 
+	/** Cooldown time when MatchState is InProgress and the match countdown has finished */
+	float CooldownTime = 0.f;
+
 	/** Help to distinguish 2 time seconds in the unit of integer when ticking */
 	int32 CountdownInt = 0;
 
@@ -91,5 +94,5 @@ private:
 
 	/** Instead of RepNotify, we use a client RPC to transmit the data from the server to the requesting client */
 	UFUNCTION(Client, Reliable)
-	void ClientJoinMidGame(float LevelStarting, float Warmup, float Match, FName State);
+	void ClientJoinMidGame(float LevelStarting, float Warmup, float Match, float Cooldown, FName State);
 };
