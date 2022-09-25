@@ -47,6 +47,12 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* MatchCountdown;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TopScorePlayer;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* TopScore;
 	
 public:
 	void DisplayDefeatedMsg(ESlateVisibility Param);

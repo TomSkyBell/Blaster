@@ -5,7 +5,10 @@
 #include "Components/ProgressBar.h"
 #include "Components/TextBlock.h"
 #include "GameFramework/GameMode.h"
+#include "GameFramework/PlayerState.h"
+#include "PlayerState/BlasterPlayerState.h"
 #include "GameMode/BlasterGameMode.h"
+#include "GameState/BlasterGameState.h"
 #include "HUD/AnnouncementWidget.h"
 #include "HUD/BlasterHUD.h"
 #include "HUD/CharacterOverlay.h"
@@ -148,6 +151,46 @@ void ABlasterPlayerController::UpdateMatchCountDown(int32 Countdown)
 	BlasterHUD->GetCharacterOverlay()->MatchCountdown->SetText(FText::FromString(MatchCountdown));
 }
 
+void ABlasterPlayerController::UpdateTopScorePlayer()
+{
+	const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+	if (!BlasterGameState) return;
+
+	auto PlayerStates = BlasterGameState->GetTopScorePlayerStates();
+	if (PlayerStates.IsEmpty()) return;
+
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->TopScorePlayer) return;
+	
+	FString PlayerName;
+	for (const auto& State: PlayerStates)
+	{
+		if (!State) return;
+		PlayerName.Append(FString::Printf(TEXT("%s\n"), *State->GetPlayerName()));
+	}
+	BlasterHUD->GetCharacterOverlay()->TopScorePlayer->SetText(FText::FromString(PlayerName));
+}
+
+void ABlasterPlayerController::UpdateTopScore()
+{
+	const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+	if (!BlasterGameState) return;
+
+	const auto PlayerStates = BlasterGameState->GetTopScorePlayerStates();
+	const float TopScore = BlasterGameState->GetTopScore();
+	if (PlayerStates.IsEmpty()) return;
+	
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->TopScore) return;
+	
+	FString TopScoreString;
+	for (int32 i = 0; i < PlayerStates.Num(); ++i)
+	{
+		TopScoreString.Append(FString::Printf(TEXT("%d\n"), FMath::CeilToInt32(TopScore)));
+	}
+	BlasterHUD->GetCharacterOverlay()->TopScore->SetText(FText::FromString(TopScoreString));
+}
+
 void ABlasterPlayerController::SetHUDTime()
 {
 	float TimeLeft = 0.f;
@@ -190,15 +233,15 @@ void ABlasterPlayerController::RefreshHUD()
 void ABlasterPlayerController::OnMatchStateSet(FName State)
 {
 	MatchState = State;
-	HandleMatchHasStarted();
+	HandleMatchState();
 }
 
 void ABlasterPlayerController::OnRep_MatchState()
 {
-	HandleMatchHasStarted();
+	HandleMatchState();
 }
 
-void ABlasterPlayerController::HandleMatchHasStarted()
+void ABlasterPlayerController::HandleMatchState()
 {
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD) return;
@@ -213,12 +256,43 @@ void ABlasterPlayerController::HandleMatchHasStarted()
 	else if (MatchState == MatchState::Cooldown)
 	{
 		if (!BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetAnnouncement() ||
-			!BlasterHUD->GetAnnouncement()->Announce_0 || !BlasterHUD->GetAnnouncement()->Announce_1) return;
+			!BlasterHUD->GetAnnouncement()->Announce_0 || !BlasterHUD->GetAnnouncement()->Announce_1 ||
+			!BlasterHUD->GetAnnouncement()->WinText) return;
 		
 		BlasterHUD->GetCharacterOverlay()->RemoveFromViewport();
-		BlasterHUD->GetAnnouncement()->Announce_0->SetText(FText::FromString("Game Ready, Starts in:"));
+		BlasterHUD->GetAnnouncement()->Announce_0->SetText(FText::FromString("New Match Starts in:"));
 		BlasterHUD->GetAnnouncement()->Announce_1->SetText(FText::FromString(""));
 		BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Visible);
+
+		// When the match ends, we show the winner announcement.
+		const ABlasterGameState* BlasterGameState = Cast<ABlasterGameState>(UGameplayStatics::GetGameState(this));
+		const ABlasterPlayerState* BlasterPlayerState = GetPlayerState<ABlasterPlayerState>();
+		if (!BlasterGameState || !BlasterPlayerState) return;
+
+		FString WinString;
+		auto PlayerStates = BlasterGameState->GetTopScorePlayerStates();
+		if (PlayerStates.Num() == 0)
+		{
+			WinString = "There is no winner.";
+		}
+		else if (PlayerStates.Num() == 1 && PlayerStates[0] == BlasterPlayerState)
+		{
+			WinString = "You are the winner!";
+		}
+		else if (PlayerStates.Num() == 1)
+		{
+			WinString = "Winner:";
+		}
+		else if (PlayerStates.Num() > 1)
+		{
+			WinString = "Players tied for the win:\n";
+			for (const auto& State: PlayerStates)
+			{
+				WinString.Append(FString::Printf(TEXT("%s\n"), *State->GetPlayerName()));
+			}
+		}
+		BlasterHUD->GetAnnouncement()->WinText->SetText(FText::FromString(WinString));
+		BlasterHUD->GetAnnouncement()->WinText->SetVisibility(ESlateVisibility::Visible);
 	}
 }
 

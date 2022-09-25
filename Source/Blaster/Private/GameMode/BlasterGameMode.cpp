@@ -5,6 +5,7 @@
 #include "Character/BlasterCharacter.h"
 #include "GameFramework/PlayerStart.h"
 #include "GameFramework/PlayerState.h"
+#include "GameState/BlasterGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "PlayerController/BlasterPlayerController.h"
 #include "PlayerState/BlasterPlayerState.h"
@@ -68,9 +69,16 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 	ABlasterPlayerState* VictimPlayerState = VictimController->GetPlayerState<ABlasterPlayerState>();
 	if (!AttackerPlayerState || !VictimPlayerState || AttackerPlayerState == VictimPlayerState) return;
 
+	// Update PlayerState Info
 	AttackerPlayerState->UpdateScore();
 	VictimPlayerState->UpdateDefeats();
 	EliminatedCharacter->Eliminated();
+
+	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();
+	if (!BlasterGameState) return;
+
+	// Update GameState Info
+	BlasterGameState->UpdateTopScorePlayerStates(AttackerPlayerState);
 }
 
 void ABlasterGameMode::RequestRespawn(ABlasterCharacter* EliminatedCharacter, AController* EliminatedController)

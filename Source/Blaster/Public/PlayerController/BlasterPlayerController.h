@@ -33,6 +33,10 @@ public:
 	void UpdateAnnouncement(int32 Countdown);
 	/** Update the match time after matching */
 	void UpdateMatchCountDown(int32 Countdown);
+	/** Update the top score player */
+	void UpdateTopScorePlayer();
+	/** Update the top score */
+	void UpdateTopScore();
 	/** Set the warmup time, match time, ...etc each frame */
 	void SetHUDTime();
 	void RefreshHUD();
@@ -86,7 +90,7 @@ private:
 	void OnRep_MatchState();
 
 	/** Handle the common functionality on replication about starting match */
-	void HandleMatchHasStarted();
+	void HandleMatchState();
 
 	/** Request the server to get the warmup time, match time, level starting time and match state once the player joins mid-game */
 	UFUNCTION(Server, Reliable)

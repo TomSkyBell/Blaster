@@ -23,4 +23,7 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* Announce_1;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* WinText;
 };
