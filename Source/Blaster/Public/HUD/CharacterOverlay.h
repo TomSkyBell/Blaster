@@ -53,6 +53,9 @@ public:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* TopScore;
+
+	UPROPERTY(Transient, meta = (BindWidgetAnim))
+	class UWidgetAnimation* TimeBlink;
 	
 public:
 	void DisplayDefeatedMsg(ESlateVisibility Param);

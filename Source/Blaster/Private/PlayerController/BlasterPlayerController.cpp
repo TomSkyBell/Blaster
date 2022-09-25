@@ -122,17 +122,18 @@ void ABlasterPlayerController::UpdateAnnouncement(int32 Countdown)
 	if (!BlasterHUD || !BlasterHUD->GetAnnouncement() || !BlasterHUD->GetAnnouncement()->Announce_0 ||
 		!BlasterHUD->GetAnnouncement()->Announce_1 || !BlasterHUD->GetAnnouncement()->TimeText) return;
 
+	UAnnouncementWidget* Announcement = BlasterHUD->GetAnnouncement();
 	if (Countdown <= 0)
 	{
-		BlasterHUD->GetAnnouncement()->Announce_0->SetText(FText());
-		BlasterHUD->GetAnnouncement()->Announce_1->SetText(FText());
-		BlasterHUD->GetAnnouncement()->TimeText->SetText(FText());
+		Announcement->Announce_0->SetText(FText());
+		Announcement->Announce_1->SetText(FText());
+		Announcement->TimeText->SetText(FText());
 		return;
 	}
 	const int32 Minute = Countdown / 60.f;
 	const int32 Second = Countdown - 60 * Minute;
 	const FString CountdownString = FString::Printf(TEXT("%02d:%02d"), Minute, Second);
-	BlasterHUD->GetAnnouncement()->TimeText->SetText(FText::FromString(CountdownString));
+	Announcement->TimeText->SetText(FText::FromString(CountdownString));
 }
 
 void ABlasterPlayerController::UpdateMatchCountDown(int32 Countdown)
@@ -140,15 +141,24 @@ void ABlasterPlayerController::UpdateMatchCountDown(int32 Countdown)
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->MatchCountdown) return;
 
-	if (Countdown <= 0)
+	UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay();
+	if (Countdown > 0 && Countdown <= 30)
 	{
-		BlasterHUD->GetCharacterOverlay()->MatchCountdown->SetText(FText());
+		// Urgent countdown effect, turns red and play blink animation. (animation no need to loop, because update is loop every 1 second)
+		CharacterOverlay->MatchCountdown->SetColorAndOpacity((FLinearColor(1.f, 0.f, 0.f)));
+		CharacterOverlay->PlayAnimation(CharacterOverlay->TimeBlink);
+	}
+	else if (Countdown <= 0)
+	{
+		CharacterOverlay->MatchCountdown->SetText(FText());
+		CharacterOverlay->MatchCountdown->SetColorAndOpacity((FLinearColor(1.f, 1.f, 1.f)));
+		CharacterOverlay->StopAnimation(CharacterOverlay->TimeBlink);
 		return;
 	}
 	const int32 Minute = Countdown / 60.f;
 	const int32 Second = Countdown - 60 * Minute;
 	const FString MatchCountdown = FString::Printf(TEXT("%02d:%02d"), Minute, Second);
-	BlasterHUD->GetCharacterOverlay()->MatchCountdown->SetText(FText::FromString(MatchCountdown));
+	CharacterOverlay->MatchCountdown->SetText(FText::FromString(MatchCountdown));
 }
 
 void ABlasterPlayerController::UpdateTopScorePlayer()
@@ -281,7 +291,8 @@ void ABlasterPlayerController::HandleMatchState()
 		}
 		else if (PlayerStates.Num() == 1)
 		{
-			WinString = "Winner:";
+			WinString = "Winner:\n";
+			WinString.Append(FString::Printf(TEXT("%s\n"), *PlayerStates[0]->GetPlayerName()));
 		}
 		else if (PlayerStates.Num() > 1)
 		{
