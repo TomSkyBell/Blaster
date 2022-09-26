@@ -1,18 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Weapon/ProjectileWeapon.h"
+#include "Weapon/WeaponProjectile.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Weapon/Casing.h"
 #include "Weapon/Projectile.h"
 
-AProjectileWeapon::AProjectileWeapon()
-{
-	WeaponType = EWeaponType::EWT_AssaultRifle;
-}
-
-
-void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
+void AWeaponProjectile::Fire(const FVector& TraceHitTarget)
 {
 	// Common game logic (weapon functionality)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
@@ -23,13 +17,13 @@ void AProjectileWeapon::Fire(const FVector& TraceHitTarget)
 	if (!HasAuthority()) return;
 
 	// Respective game logic (weapon functionality)
-	FireBullet(TraceHitTarget);
-	EjectBulletShell();
+	FireProjectile(TraceHitTarget);
+	EjectProjectileShell();
 
 	
 }
 
-void AProjectileWeapon::FireBullet(const FVector& TraceHitTarget)
+void AWeaponProjectile::FireProjectile(const FVector& TraceHitTarget)
 {
 	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
 	if (MuzzleFlashSocket)
@@ -59,7 +53,7 @@ void AProjectileWeapon::FireBullet(const FVector& TraceHitTarget)
 	}
 }
 
-void AProjectileWeapon::EjectBulletShell()
+void AWeaponProjectile::EjectProjectileShell()
 {
 	const USkeletalMeshSocket* AmmoEjectSocket = GetWeaponMesh()->GetSocketByName(FName("AmmoEject"));
 	if (AmmoEjectSocket)

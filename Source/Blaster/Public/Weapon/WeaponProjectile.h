@@ -4,18 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Weapon/Weapon.h"
-#include "ProjectileWeapon.generated.h"
+#include "WeaponProjectile.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class BLASTER_API AProjectileWeapon : public AWeapon
+class BLASTER_API AWeaponProjectile : public AWeapon
 {
 	GENERATED_BODY()
 
 public:
-	AProjectileWeapon();
 	virtual void Fire(const FVector& TraceHitTarget) override;
 	
 private:
@@ -26,6 +25,6 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<class ACasing> CasingClass;
 
-	void FireBullet(const FVector& TraceHitTarget);
-	void EjectBulletShell();
+	void FireProjectile(const FVector& TraceHitTarget);
+	void EjectProjectileShell();
 };

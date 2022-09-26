@@ -13,6 +13,8 @@ class BLASTER_API AProjectile : public AActor
 	
 public:	
 	AProjectile();
+	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -28,17 +30,36 @@ protected:
 
 	virtual void Destroyed() override;
 
-public:	
-	virtual void Tick(float DeltaTime) override;
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/** Projectile Damage of the weapon */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float Damage = 10.f;
+
+	/** Projectile Minimum Damage for some weapon with a damage falloff effect */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float MinDamage = 0.f;
+
+	/** Radius of the full damage area from the origin */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float DamageInnerRadius = 50.f;
+
+	/** Radius of the minimum damage area from the origin */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float DamageOuterRadius = 100.f;
+
+	/** Falloff exponent of damage from full damage to minimum damage */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float DamageFalloff = 1.f;
 
 private:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
+	UStaticMeshComponent* ProjectileMesh;
 
+	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+	
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* Tracer;
 	

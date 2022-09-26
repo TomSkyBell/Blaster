@@ -67,11 +67,14 @@ void ABlasterGameMode::PlayerEliminated(ABlasterCharacter* EliminatedCharacter, 
 
 	ABlasterPlayerState* AttackerPlayerState = AttackerController->GetPlayerState<ABlasterPlayerState>();
 	ABlasterPlayerState* VictimPlayerState = VictimController->GetPlayerState<ABlasterPlayerState>();
-	if (!AttackerPlayerState || !VictimPlayerState || AttackerPlayerState == VictimPlayerState) return;
+	if (!AttackerPlayerState || !VictimPlayerState) return;
 
-	// Update PlayerState Info
-	AttackerPlayerState->UpdateScore();
-	VictimPlayerState->UpdateDefeats();
+	// Need to check if it's suicide.
+	if (AttackerPlayerState != VictimPlayerState)
+	{
+		AttackerPlayerState->UpdateScore();
+		VictimPlayerState->UpdateDefeats();
+	}
 	EliminatedCharacter->Eliminated();
 
 	ABlasterGameState* BlasterGameState = GetGameState<ABlasterGameState>();

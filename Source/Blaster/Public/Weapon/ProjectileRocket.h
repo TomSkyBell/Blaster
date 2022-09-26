@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Weapon/Projectile.h"
-#include "ProjectileBullet.generated.h"
+#include "ProjectileRocket.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class BLASTER_API AProjectileBullet : public AProjectile
+class BLASTER_API AProjectileRocket : public AProjectile
 {
 	GENERATED_BODY()
 
 protected:
-	/** Apply Damage when on hit */
+	/** Apply Radial Damage when on hit */
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
 	
 };

@@ -123,7 +123,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	}
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
-
+	
 	SetHUDWeaponType();
 	if (BlasterCharacter->IsLocallyControlled())
 	{
@@ -180,14 +180,16 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 
 void UCombatComponent::Fire()
 {
+	// Be aware that sequence is important, because when we fire out the last ammo, the ammo will be 0
+	// and reload will be executed immediately.
+	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty())
+	{
+		Reload();
+	}
 	if (CanFire())
 	{
 		ServerFire(HitTarget);
 		StartFireTimer();
-	}
-	if (EquippedWeapon && EquippedWeapon->IsAmmoEmpty())
-	{
-		Reload();
 	}
 }
 
@@ -264,6 +266,9 @@ void UCombatComponent::SetHUDWeaponType()
 	{
 	case EWeaponType::EWT_AssaultRifle:
 		WeaponType = FString("Assault Rifle");
+		break;
+	case EWeaponType::EWT_RocketLauncher:
+		WeaponType = FString("Rocket Launcher");
 		break;
 	case EWeaponType::EWT_MAX:
 		WeaponType = FString("");

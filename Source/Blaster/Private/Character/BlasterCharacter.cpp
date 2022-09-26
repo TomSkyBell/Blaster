@@ -231,8 +231,11 @@ void ABlasterCharacter::OnRep_IsRespawned()
 
 void ABlasterCharacter::MulticastEliminated_Implementation()
 {
+	// Disable the collision.
 	if (GetCapsuleComponent()) GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	if (GetMesh()) GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Disable the movement of inertial even though we lose the control. 
 	if (GetCharacterMovement())
 	{
 		GetCharacterMovement()->DisableMovement();
@@ -241,7 +244,14 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
 	if (BlasterPlayerController)
 	{
+		// Play the defeated HUD effect
+		BlasterPlayerController->DisplayDefeatedMsg();
+
+		// Disable the controller input.
 		DisableInput(BlasterPlayerController);
+		
+		// We need to make sure bFireButtonPressed is cleared or the weapon will keep firing because the input is disabled
+		FireButtonReleased();
 	}
 	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
 

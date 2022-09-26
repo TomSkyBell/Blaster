@@ -87,7 +87,17 @@ void ABlasterPlayerController::UpdatePlayerDefeats(int32 Value)
 	
 	const FString DefeatsText = FString::Printf(TEXT("%d"), Value);
 	BlasterHUD->GetCharacterOverlay()->Defeats->SetText(FText::FromString(DefeatsText));
-	BlasterHUD->GetCharacterOverlay()->DisplayDefeatedMsg(ESlateVisibility::Visible);
+}
+
+void ABlasterPlayerController::DisplayDefeatedMsg()
+{
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->DefeatedMsg ||
+		!BlasterHUD->GetCharacterOverlay()->DefeatedMsgAnim) return;
+
+	UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay();
+	CharacterOverlay->DefeatedMsg->SetVisibility(ESlateVisibility::Visible);
+	CharacterOverlay->PlayAnimation(CharacterOverlay->DefeatedMsgAnim);
 }
 
 void ABlasterPlayerController::UpdateWeaponAmmo(int32 AmmoAmount)
@@ -234,9 +244,14 @@ void ABlasterPlayerController::SetHUDTime()
 void ABlasterPlayerController::RefreshHUD()
 {
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
-	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay()) return;
-	
-	BlasterHUD->GetCharacterOverlay()->DisplayDefeatedMsg(ESlateVisibility::Hidden);
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->DefeatedMsg) return;
+
+	UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay();
+	CharacterOverlay->DefeatedMsg->SetVisibility(ESlateVisibility::Hidden);
+	if (CharacterOverlay->IsAnimationPlaying(CharacterOverlay->DefeatedMsgAnim))
+	{
+		CharacterOverlay->StopAnimation(CharacterOverlay->DefeatedMsgAnim);
+	}
 	UpdatePlayerHealth(100.f, 100.f);
 }
 
@@ -258,10 +273,12 @@ void ABlasterPlayerController::HandleMatchState()
 	
 	if (MatchState == MatchState::InProgress)
 	{
-		if (!BlasterHUD->GetAnnouncement()) return;
-		
-		BlasterHUD->AddCharacterOverlay();
-		BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Hidden);
+		if (!BlasterHUD->GetCharacterOverlay()) BlasterHUD->AddCharacterOverlay();
+
+		if (BlasterHUD->GetAnnouncement())
+		{
+			BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Hidden);
+		}
 	}
 	else if (MatchState == MatchState::Cooldown)
 	{

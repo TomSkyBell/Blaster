@@ -10,11 +10,11 @@
 // OnHit is executed from the server, OnHit has been bound to delegate by HasAuthority() check, so no need to recheck internal.
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
-	 const ABlasterCharacter* OwningPlayerCharacter = Cast<ABlasterCharacter>(GetOwner());
-	 if (!OwningPlayerCharacter) return;
+	// The Owner/Instigator is set in SpawnParams when we spawn the projectile
+	const APawn* ProjectileInstigator = GetInstigator();
+	if (!ProjectileInstigator) return;
 	
-	ABlasterPlayerController* OwningPlayerController = Cast<ABlasterPlayerController>(OwningPlayerCharacter->Controller);
-	UGameplayStatics::ApplyDamage(OtherActor, Damage, OwningPlayerController, this, UDamageType::StaticClass());
+	UGameplayStatics::ApplyDamage(OtherActor, Damage, ProjectileInstigator->GetController(), this, UDamageType::StaticClass());
 
 	// Destroy() will be called, so Super::OnHit should be called at last.
 	Super::OnHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);

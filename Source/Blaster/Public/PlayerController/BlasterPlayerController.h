@@ -26,6 +26,8 @@ public:
 	void UpdatePlayerHealth(float Health, float MaxHealth);
 	void UpdatePlayerScore(float Value);
 	void UpdatePlayerDefeats(int32 Value);
+	/** Display the text when player is eliminated */
+	void DisplayDefeatedMsg();
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
 	void UpdateWeaponType(const FString& WeaponType);
