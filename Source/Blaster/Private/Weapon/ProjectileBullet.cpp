@@ -13,9 +13,13 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 	// The Owner/Instigator is set in SpawnParams when we spawn the projectile
 	const APawn* ProjectileInstigator = GetInstigator();
 	if (!ProjectileInstigator) return;
-	
-	UGameplayStatics::ApplyDamage(OtherActor, Damage, ProjectileInstigator->GetController(), this, UDamageType::StaticClass());
 
+	// We only want the Damage Process be executed on the server.
+	if (HasAuthority())
+	{
+		UGameplayStatics::ApplyDamage(OtherActor, Damage, ProjectileInstigator->GetController(), this, UDamageType::StaticClass());
+	}
+	
 	// Destroy() will be called, so Super::OnHit should be called at last.
 	Super::OnHit(HitComponent, OtherActor, OtherComp, NormalImpulse, Hit);
 }

@@ -19,6 +19,26 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	UPROPERTY(VisibleAnywhere)
+	class UBoxComponent* CollisionBox;
+
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	/** If we hope destroy the projectile immediately once it's hit */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	bool bOnHitDestroy = true;
+
+	/** Timer delay for the destruction */
+	UPROPERTY(EditAnywhere, Category = Weapon)
+	float DestroyDelay = 3.f;
+
+	/** Timer for the destruction */
+	FTimerHandle DestroyTimerHandle;
+
+	/** Delegate function for the destroy timer */
+	virtual void DestroyTimerFinished();
+	
 	UFUNCTION()
 	virtual void OnHit(
 		UPrimitiveComponent* HitComponent,
@@ -52,19 +72,21 @@ protected:
 
 private:
 	UPROPERTY(VisibleAnywhere)
-	class UBoxComponent* CollisionBox;
-
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* ProjectileMesh;
-
-	UPROPERTY(VisibleAnywhere)
 	class UProjectileMovementComponent* ProjectileMovementComponent;
 	
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* Tracer;
+
+	UPROPERTY()
+	class UParticleSystemComponent* TracerComponent;
+
+	UPROPERTY(EditAnywhere)
+	class USoundBase* TracerSound;
+
+	UPROPERTY()
+	class UAudioComponent* TracerSoundComponent;
 	
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastHitImpact(AActor* OtherActor);
+	void HitImpact(AActor* OtherActor);
 	
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* HitEffectForPawn;

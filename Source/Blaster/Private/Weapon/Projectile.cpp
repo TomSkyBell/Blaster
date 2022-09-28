@@ -7,7 +7,9 @@
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/Blaster.h"
+#include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Particles/ParticleSystemComponent.h"
 
 AProjectile::AProjectile()
 {
@@ -43,53 +45,33 @@ void AProjectile::BeginPlay()
 	// Spawn the particle effect when fire.
 	if (Tracer)
 	{
-		UGameplayStatics::SpawnEmitterAttached(
+		TracerComponent = UGameplayStatics::SpawnEmitterAttached(
 			Tracer,
-			CollisionBox,
+			GetRootComponent(),
 			FName(),
 			GetActorLocation(),
 			GetActorRotation(),
 			EAttachLocation::KeepWorldPosition
 			);
 	}
-	
-	// There are 2 ways to implement:
-	// 1. We are not checking the 'HasAuthority()', and then for the reason that the projectile is spawned through the
-	// MulticastRPC, so every Client and the Server can do the OnHit() on their own machine.
-	
-	// 2. We check the 'HasAuthority()' to let the OnHit only work on the Server machine, and place the OnHit content
-	// like PlaySound, SpawnEmitter in a Destroy() function, which something works like a MulticastRPC, it can propagate to
-	// the clients so that all the clients can do the OnHit content on their own machine.
-	
-	if (HasAuthority())
+	if (TracerSound)
 	{
-		CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+		TracerSoundComponent = UGameplayStatics::SpawnSoundAttached(
+			TracerSound,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			true,
+			TracerSound->GetVolumeMultiplier(),
+			TracerSound->GetPitchMultiplier(),
+			0.f,
+			TracerSound->AttenuationSettings,
+			(USoundConcurrency*)nullptr
+		);
 	}
-}
-
-// We gonna make the OnHit function a server-controlled function, just like overlap function. See, on the client end, once OnHit triggered,
-// we cannot see the server's playing montage cuz the client cannot control the server to play montage. So why don't we directly put the
-// logic on the server and use a multi-RPC to wait for the multicast result from the server.
-void AProjectile::OnHit(
-	UPrimitiveComponent* HitComponent,
-	AActor* OtherActor,
-	UPrimitiveComponent* OtherComp,
-	FVector NormalImpulse,
-	const FHitResult& Hit
-	)
-{
-	// Multicast the hit impact.
-	MulticastHitImpact(OtherActor);
-	
-	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
-	// Compared to MulticastRPC, this way can lower the bandwidth.
-	Destroy();
-}
-
-void AProjectile::Destroyed()
-{
-	Super::Destroyed();
-	
+	CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
 }
 
 void AProjectile::Tick(float DeltaTime)
@@ -104,7 +86,44 @@ void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 
 }
 
-void AProjectile::MulticastHitImpact_Implementation(AActor* OtherActor)
+// We gonna make the OnHit function a server-controlled function, just like overlap function. See, on the client end, once OnHit triggered,
+// we cannot see the server's playing montage cuz the client cannot control the server to play montage. So why don't we directly put the
+// logic on the server and use a multi-RPC to wait for the multicast result from the server.
+void AProjectile::OnHit(
+	UPrimitiveComponent* HitComponent,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	FVector NormalImpulse,
+	const FHitResult& Hit
+	)
+{
+	// Hit impact.
+	HitImpact(OtherActor);
+	
+	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
+	// Compared to MulticastRPC, this way can lower the bandwidth.
+	if (bOnHitDestroy)
+	{
+		Destroy();
+	}
+	else
+	{
+		// Call Destroy() after a period of time.
+		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &ThisClass::DestroyTimerFinished, DestroyDelay, false);
+	}
+}
+
+void AProjectile::DestroyTimerFinished()
+{
+	Destroy();
+}
+
+void AProjectile::Destroyed()
+{
+	Super::Destroyed();
+}
+
+void AProjectile::HitImpact(AActor* OtherActor)
 {
 	if (Cast<ABlasterCharacter>(OtherActor))
 	{
@@ -116,5 +135,13 @@ void AProjectile::MulticastHitImpact_Implementation(AActor* OtherActor)
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffectForStone, GetActorLocation());
 		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSoundForStone, GetActorLocation());
 	}
+	
+	// Since we manually call the destroy() after timer finished, so we need to hide the mesh and disable the collision first.
+	if (ProjectileMesh) ProjectileMesh->SetVisibility(false);
+	if (CollisionBox) CollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// Deactivate the tracer and tracer sound.
+	if (TracerComponent) TracerComponent->Deactivate();
+	if (TracerSoundComponent) TracerSoundComponent->Deactivate();
 }
 
