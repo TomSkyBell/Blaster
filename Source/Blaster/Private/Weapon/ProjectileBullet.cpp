@@ -2,17 +2,17 @@
 
 
 #include "Weapon/ProjectileBullet.h"
-#include "GameFramework/ProjectileMovementComponent.h"
+#include "Weapon/BlasterProjectileMovementComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 AProjectileBullet::AProjectileBullet()
 {
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Bullet Movement"));
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-	ProjectileMovementComponent->SetIsReplicated(true);
-	ProjectileMovementComponent->InitialSpeed = 15000.f;
-	ProjectileMovementComponent->MaxSpeed = 15000.f;
+	BulletMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
+	BulletMovementComponent->bRotationFollowsVelocity = true;
+	BulletMovementComponent->SetIsReplicated(true);
+	BulletMovementComponent->InitialSpeed = 15000.f;
+	BulletMovementComponent->MaxSpeed = 15000.f;
 }
 
 // OnHit is executed from the server, OnHit has been bound to delegate by HasAuthority() check, so no need to recheck internal.
@@ -21,6 +21,9 @@ void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 	// The Owner/Instigator is set in SpawnParams when we spawn the projectile
 	const APawn* ProjectileInstigator = GetInstigator();
 	if (!ProjectileInstigator) return;
+
+	// If we hit ourselves, it'll not trigger the HitImpact.
+	if (OtherActor == GetOwner()) return;
 
 	// We only want the Damage Process be executed on the server.
 	if (HasAuthority())

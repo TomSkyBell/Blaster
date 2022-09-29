@@ -54,7 +54,7 @@ void AWeapon::BeginPlay()
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
 	}
-	// 1. There is a risk when we call virtual function in a constructor, so we call instead.
+	// 1. There is a risk when we call virtual function in a constructor, so we call here instead.
 	// 2. We should set it to true when we drop the weapon and false when we equip the weapon, because when we hold the weapon, the
 	// character movement is replicated, and the weapon is attached to the character, so it's position can be replicated.
 	// 3. The reason why we need to replicate the movement is that, the weapon is set physics simulated, once it falls or push by
@@ -168,29 +168,31 @@ void AWeapon::HandleWeaponState()
 	{
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
-
-		// When we equip the weapon, we are not replicating it because it's attached to the character which his movement has already replicated.
-		SetReplicateMovement(false);
 		
 		// SetWeaponState() is not always executed from the server, so we need to guarantee it on the server.
 		if (HasAuthority())
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
+		// When we equip the weapon, we don't have to replicate the movement because the weapon is attached to the character and the character movement is replicated.
+		SetReplicateMovement(false);
+
+		// Set physics simulation, be aware of the sequence.
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 		
 	case EWeaponState::EWS_Dropped:
-		// When we drop the weapon, we are replicating its movement because the weapon is set simulated physics and thus
-		// it can probably fall or push by other force with a movement.
-		SetReplicateMovement(true);
-		
+		// SetWeaponState() is not always executed from the server, so we need to guarantee it on the server.
 		if (HasAuthority())
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		// When we drop the weapon, the weapon's movement is effected by the physics simulation like fall, push by a force.etc, so we need to replicate movement again.
+		SetReplicateMovement(true);
+		
+		// Set physics simulation, be aware of the sequence.
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);

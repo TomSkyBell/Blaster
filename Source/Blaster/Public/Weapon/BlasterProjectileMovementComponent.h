@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/ProjectileMovementComponent.h"
-#include "RocketMovementComponent.generated.h"
+#include "BlasterProjectileMovementComponent.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class BLASTER_API URocketMovementComponent : public UProjectileMovementComponent
+class BLASTER_API UBlasterProjectileMovementComponent : public UProjectileMovementComponent
 {
 	GENERATED_BODY()
 

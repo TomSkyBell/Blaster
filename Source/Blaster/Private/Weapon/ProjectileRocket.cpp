@@ -2,7 +2,7 @@
 
 
 #include "Weapon/ProjectileRocket.h"
-#include "Weapon/RocketMovementComponent.h"
+#include "Weapon/BlasterProjectileMovementComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -10,7 +10,7 @@
 AProjectileRocket::AProjectileRocket()
 {
 	// Create a new customized projectile movement component.
-	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("Bullet Movement"));
+	RocketMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
 	RocketMovementComponent->bRotationFollowsVelocity = true;
 	RocketMovementComponent->SetIsReplicated(true);
 	RocketMovementComponent->InitialSpeed = 2000.f;

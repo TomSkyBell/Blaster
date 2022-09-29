@@ -26,7 +26,7 @@ protected:
 private:
 	/** We customize the ProjectileMovementComponent */
 	UPROPERTY(VisibleAnywhere)
-	class URocketMovementComponent* RocketMovementComponent;
+	class UBlasterProjectileMovementComponent* RocketMovementComponent;
 	
 	/** Instead of using particle system -- 'Tracer' in the parent class, we use Niagara system here to combine two emitters together
 	 * RocketFireFlash emitter and TrailSmoke emitter */

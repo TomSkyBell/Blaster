@@ -28,6 +28,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& TraceHitTarget);
+	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 	void SetWeaponState(EWeaponState State);
 	void Dropped();
 	void SpendRound();
