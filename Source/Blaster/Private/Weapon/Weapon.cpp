@@ -54,6 +54,12 @@ void AWeapon::BeginPlay()
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
 	}
+	// 1. There is a risk when we call virtual function in a constructor, so we call instead.
+	// 2. We should set it to true when we drop the weapon and false when we equip the weapon, because when we hold the weapon, the
+	// character movement is replicated, and the weapon is attached to the character, so it's position can be replicated.
+	// 3. The reason why we need to replicate the movement is that, the weapon is set physics simulated, once it falls or push by
+	// other force, the simulation will work and if the movement is not replicated, the weapon 'll be show up at different position on clients and server.
+	SetReplicateMovement(true);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -96,7 +102,7 @@ void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
 	
-	WeaponState_RepNotify();
+	HandleWeaponState();
 }
 
 void AWeapon::Dropped()
@@ -155,13 +161,16 @@ void AWeapon::ResetOwnership()
 	WeaponOwnerController = nullptr;
 }
 
-void AWeapon::WeaponState_RepNotify()
+void AWeapon::HandleWeaponState()
 {
 	// Change the weapon's pickup widget in Server World to be invisible 
 	switch(WeaponState)
 	{
 	case EWeaponState::EWS_Equipped:
 		ShowPickupWidget(false);
+
+		// When we equip the weapon, we are not replicating it because it's attached to the character which his movement has already replicated.
+		SetReplicateMovement(false);
 		
 		// SetWeaponState() is not always executed from the server, so we need to guarantee it on the server.
 		if (HasAuthority())
@@ -174,6 +183,10 @@ void AWeapon::WeaponState_RepNotify()
 		break;
 		
 	case EWeaponState::EWS_Dropped:
+		// When we drop the weapon, we are replicating its movement because the weapon is set simulated physics and thus
+		// it can probably fall or push by other force with a movement.
+		SetReplicateMovement(true);
+		
 		if (HasAuthority())
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -194,7 +207,7 @@ void AWeapon::WeaponState_RepNotify()
 // Change the weapon's pickup widget in clients' world to be invisible
 void AWeapon::OnRep_WeaponState()
 {
-	WeaponState_RepNotify();
+	HandleWeaponState();
 }
 
 void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

@@ -20,6 +20,9 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere)
+	class UProjectileMovementComponent* ProjectileMovementComponent;
+
+	UPROPERTY(VisibleAnywhere)
 	class UBoxComponent* CollisionBox;
 
 	UPROPERTY(VisibleAnywhere)
@@ -71,9 +74,6 @@ protected:
 	float DamageFalloff = 1.f;
 
 private:
-	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
-	
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* Tracer;
 
@@ -86,7 +86,7 @@ private:
 	UPROPERTY()
 	class UAudioComponent* TracerSoundComponent;
 	
-	void HitImpact(AActor* OtherActor);
+	void HandleHitImpact(AActor* OtherActor);
 	
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* HitEffectForPawn;

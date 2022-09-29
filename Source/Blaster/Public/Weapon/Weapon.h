@@ -79,7 +79,7 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 
-	void WeaponState_RepNotify();
+	void HandleWeaponState();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* PickupWidget;

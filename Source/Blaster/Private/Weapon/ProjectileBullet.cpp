@@ -2,10 +2,18 @@
 
 
 #include "Weapon/ProjectileBullet.h"
-
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Kismet/GameplayStatics.h"
-#include "PlayerController/BlasterPlayerController.h"
+
+AProjectileBullet::AProjectileBullet()
+{
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Bullet Movement"));
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->SetIsReplicated(true);
+	ProjectileMovementComponent->InitialSpeed = 15000.f;
+	ProjectileMovementComponent->MaxSpeed = 15000.f;
+}
 
 // OnHit is executed from the server, OnHit has been bound to delegate by HasAuthority() check, so no need to recheck internal.
 void AProjectileBullet::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)

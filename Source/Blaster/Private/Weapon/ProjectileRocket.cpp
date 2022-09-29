@@ -2,12 +2,21 @@
 
 
 #include "Weapon/ProjectileRocket.h"
+#include "Weapon/RocketMovementComponent.h"
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AProjectileRocket::AProjectileRocket()
 {
+	// Create a new customized projectile movement component.
+	RocketMovementComponent = CreateDefaultSubobject<URocketMovementComponent>(TEXT("Bullet Movement"));
+	RocketMovementComponent->bRotationFollowsVelocity = true;
+	RocketMovementComponent->SetIsReplicated(true);
+	RocketMovementComponent->InitialSpeed = 2000.f;
+	RocketMovementComponent->MaxSpeed = 2000.f;
+	RocketMovementComponent->ProjectileGravityScale = 0.f;
+	
 	// We don't want the rocket destroyed immediately after it's hit, so we need to call the destroy manually after the timer finished.
 	bOnHitDestroy = false;	
 }
@@ -34,6 +43,9 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 	// The Owner/Instigator is set in SpawnParams when we spawn the projectile.
 	const APawn* ProjectileInstigator = GetInstigator();
 	if (!ProjectileInstigator) return;
+
+	// If we hit ourselves, it'll not trigger the HitImpact.
+	if (OtherActor == GetOwner()) return;
 
 	// We only want the Damage Process be executed on the server.
 	if (HasAuthority())

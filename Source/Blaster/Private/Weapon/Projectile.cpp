@@ -4,7 +4,6 @@
 #include "Weapon/Projectile.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
-#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Blaster/Blaster.h"
 #include "Components/AudioComponent.h"
@@ -28,14 +27,6 @@ AProjectile::AProjectile()
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Projectile Mesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);
 	ProjectileMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	// ProjectileMovementComponent updates the position of another component during its tick.
-	// If not SetUpdatedComponent(), then automatically set the root component as the updated component.
-	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
-	ProjectileMovementComponent->bRotationFollowsVelocity = true;
-	ProjectileMovementComponent->InitialSpeed = 3000.f;
-	ProjectileMovementComponent->MaxSpeed = 3500.f;
-	
 }
 
 void AProjectile::BeginPlay()
@@ -72,6 +63,9 @@ void AProjectile::BeginPlay()
 		);
 	}
 	CollisionBox->OnComponentHit.AddDynamic(this, &ThisClass::OnHit);
+
+	// This implementation works fine here, but Stephen said sometimes it fails.
+	// CollisionBox->IgnoreActorWhenMoving(GetOwner(), true);
 }
 
 void AProjectile::Tick(float DeltaTime)
@@ -98,7 +92,7 @@ void AProjectile::OnHit(
 	)
 {
 	// Hit impact.
-	HitImpact(OtherActor);
+	HandleHitImpact(OtherActor);
 	
 	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
 	// Compared to MulticastRPC, this way can lower the bandwidth.
@@ -123,7 +117,7 @@ void AProjectile::Destroyed()
 	Super::Destroyed();
 }
 
-void AProjectile::HitImpact(AActor* OtherActor)
+void AProjectile::HandleHitImpact(AActor* OtherActor)
 {
 	if (Cast<ABlasterCharacter>(OtherActor))
 	{
