@@ -54,6 +54,12 @@ void AWeapon::BeginPlay()
 		AreaSphere->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnSphereBeginOverlap);
 		AreaSphere->OnComponentEndOverlap.AddDynamic(this, &ThisClass::OnSphereEndOverlap);
 	}
+	// 1. There is a risk when we call virtual function in a constructor, so we call here instead.
+	// 2. We should set it to true when we drop the weapon and false when we equip the weapon, because when we hold the weapon, the
+	// character movement is replicated, and the weapon is attached to the character, so it's position can be replicated.
+	// 3. The reason why we need to replicate the movement is that, the weapon is set physics simulated, once it falls or push by
+	// other force, the simulation will work and if the movement is not replicated, the weapon 'll be show up at different position on clients and server.
+	SetReplicateMovement(true);
 }
 
 void AWeapon::Tick(float DeltaTime)
@@ -96,7 +102,7 @@ void AWeapon::SetWeaponState(EWeaponState State)
 {
 	WeaponState = State;
 	
-	WeaponState_RepNotify();
+	HandleWeaponState();
 }
 
 void AWeapon::Dropped()
@@ -155,7 +161,7 @@ void AWeapon::ResetOwnership()
 	WeaponOwnerController = nullptr;
 }
 
-void AWeapon::WeaponState_RepNotify()
+void AWeapon::HandleWeaponState()
 {
 	// Change the weapon's pickup widget in Server World to be invisible 
 	switch(WeaponState)
@@ -168,16 +174,25 @@ void AWeapon::WeaponState_RepNotify()
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
+		// When we equip the weapon, we don't have to replicate the movement because the weapon is attached to the character and the character movement is replicated.
+		SetReplicateMovement(false);
+
+		// Set physics simulation, be aware of the sequence.
 		WeaponMesh->SetSimulatePhysics(false);
 		WeaponMesh->SetEnableGravity(false);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		break;
 		
 	case EWeaponState::EWS_Dropped:
+		// SetWeaponState() is not always executed from the server, so we need to guarantee it on the server.
 		if (HasAuthority())
 		{
 			AreaSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		// When we drop the weapon, the weapon's movement is effected by the physics simulation like fall, push by a force.etc, so we need to replicate movement again.
+		SetReplicateMovement(true);
+		
+		// Set physics simulation, be aware of the sequence.
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -194,7 +209,7 @@ void AWeapon::WeaponState_RepNotify()
 // Change the weapon's pickup widget in clients' world to be invisible
 void AWeapon::OnRep_WeaponState()
 {
-	WeaponState_RepNotify();
+	HandleWeaponState();
 }
 
 void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

@@ -28,6 +28,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void ShowPickupWidget(bool bShowWidget);
 	virtual void Fire(const FVector& TraceHitTarget);
+	FORCEINLINE EWeaponState GetWeaponState() const { return WeaponState; }
 	void SetWeaponState(EWeaponState State);
 	void Dropped();
 	void SpendRound();
@@ -79,7 +80,7 @@ private:
 	UFUNCTION()
 	void OnRep_WeaponState();
 
-	void WeaponState_RepNotify();
+	void HandleWeaponState();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* PickupWidget;

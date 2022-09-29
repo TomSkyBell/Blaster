@@ -17,5 +17,9 @@ class BLASTER_API AProjectileBullet : public AProjectile
 protected:
 	/** Apply Damage when on hit */
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-	
+
+private:
+	/** We customize the ProjectileMovementComponent */
+	UPROPERTY(VisibleAnywhere)
+	class UBlasterProjectileMovementComponent* BulletMovementComponent;
 };

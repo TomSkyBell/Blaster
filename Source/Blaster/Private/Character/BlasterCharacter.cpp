@@ -192,7 +192,11 @@ void ABlasterCharacter::HideCharacterIfClose()
 	
 	const bool bHideCharacter = ((FollowCamera->GetComponentLocation() - GetActorLocation()).Size() < CameraThreshold);
 	GetMesh()->SetVisibility(!bHideCharacter);
-	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideCharacter);
+
+	// When the camera is close to the character, we make the character and the weapon invisible, so in this situation when the character is eliminated,
+	// the weapon is dropped and it's still invisible, so we need to recover its visibility.
+	const bool bHideWeapon = bHideCharacter && Combat->EquippedWeapon->GetWeaponState() == EWeaponState::EWS_Equipped;
+	Combat->EquippedWeapon->GetWeaponMesh()->SetVisibility(!bHideWeapon);
 }
 
 void ABlasterCharacter::Eliminated()
