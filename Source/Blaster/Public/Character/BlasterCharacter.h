@@ -57,7 +57,7 @@ private:
 	class UCameraComponent* FollowCamera;
 
 	UPROPERTY(VisibleAnywhere, Category = Input)
-	float TurnRate;
+	float TurnRate = 50.f;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	class UWidgetComponent* OverheadWidget;

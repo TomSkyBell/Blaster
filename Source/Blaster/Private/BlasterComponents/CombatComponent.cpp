@@ -58,24 +58,15 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 }
 
-void UCombatComponent::SetWeaponRelatedProperties()
-{
-	if (!EquippedWeapon) return;
-	
-	// If the new weapon has the mode we got, then do nothing, else we change the fire mode.
-	if (bAutomaticFire && !EquippedWeapon->GetCanAutoFire() ||
-		!bAutomaticFire && !EquippedWeapon->GetCanSemiAutoFire())
-	bAutomaticFire = !bAutomaticFire;
-}
-
 // This function is invoked from the server.
 void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (!BlasterCharacter || !WeaponToEquip) return;
 
 	if (EquippedWeapon) EquippedWeapon->Dropped();
-
+	
 	EquippedWeapon = WeaponToEquip;
+	bAutomaticFire = EquippedWeapon->GetCanAutoFire();
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
 	{
@@ -114,7 +105,8 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	// time to replicate from the server to the client, which means when we attach actor on the server, the multicast speed is faster than
 	// the RepNotify, so when the client attach actor, it will fail because the Simulate Physics is not updated in time.
 	if (!EquippedWeapon || !BlasterCharacter || !BlasterCharacter->GetMesh()) return;
-	
+
+	bAutomaticFire = EquippedWeapon->GetCanAutoFire();
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
 	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
 	{
@@ -270,6 +262,9 @@ void UCombatComponent::SetHUDWeaponType()
 	case EWeaponType::EWT_RocketLauncher:
 		WeaponType = FString("Rocket Launcher");
 		break;
+	case EWeaponType::EWT_HitScan:
+		WeaponType = FString("Hit Scan");
+		break;
 	case EWeaponType::EWT_MAX:
 		WeaponType = FString("");
 		break;
@@ -311,7 +306,9 @@ void UCombatComponent::ReloadAnimNotify()
 	UpdateCarriedAmmoMap();
 	
 	// bFireButtonPressed can only be accessed through the owning client, so it doesn't have to be in HasAuthority().
-	if (bFireButtonPressed) Fire();
+	// If the weapon is an automatic weapon, we can directly fire after finish reloading, if it's a semi-auto weapon,
+	// we need to repress the button to make a feeling like delay.
+	if (bFireButtonPressed && bAutomaticFire) Fire();
 }
 
 void UCombatComponent::ServerReload_Implementation()

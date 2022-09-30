@@ -18,13 +18,6 @@ public:
 	virtual void Fire(const FVector& TraceHitTarget) override;
 	
 private:
-	// Class Reference. ProjectileClass can be populated with AProjectile or anything derived from AProjectile.
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class AProjectile> ProjectileClass;
-
-	UPROPERTY(EditAnywhere)
-	TSubclassOf<class ACasing> CasingClass;
-
 	void FireProjectile(const FVector& TraceHitTarget);
 	void EjectProjectileShell();
 };

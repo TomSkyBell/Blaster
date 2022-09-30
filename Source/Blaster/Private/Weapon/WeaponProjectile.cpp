@@ -12,15 +12,12 @@ void AWeaponProjectile::Fire(const FVector& TraceHitTarget)
 	// Call the code in the parent's function. It's something like clone the parent's code here.
 	Super::Fire(TraceHitTarget);
 	
-	// If we didn't declare HasAuthority(), the following will be done twice (first on the local machine, then on the local machine from the server
-	// like the copy of the server).
+	// Since weapon is declared as IsReplicates, so once it's respawned on the server, it'll also be respawned on all clients.
 	if (!HasAuthority()) return;
 
 	// Respective game logic (weapon functionality)
 	FireProjectile(TraceHitTarget);
 	EjectProjectileShell();
-
-	
 }
 
 void AWeaponProjectile::FireProjectile(const FVector& TraceHitTarget)

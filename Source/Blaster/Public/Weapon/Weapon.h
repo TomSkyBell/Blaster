@@ -54,12 +54,16 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
-
-	/**
-	 *	WeaponType
-	 */
+	
 	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
 	EWeaponType WeaponType;
+
+	/** Class Reference. ProjectileClass can be populated with AProjectile or anything derived from AProjectile. */
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class AProjectile> ProjectileClass;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class ACasing> CasingClass;
 
 private:
 	UPROPERTY()
@@ -146,8 +150,8 @@ public:
 	FORCEINLINE float GetAimAccuracy() const { return AimAccuracy; }
 	FORCEINLINE float GetRecoilFactor() const { return RecoilFactor; }
 	FORCEINLINE float GetFireRate() const { return FireRate; }
-	FORCEINLINE float GetCanAutoFire() const { return CanAutoFire; }
-	FORCEINLINE float GetCanSemiAutoFire() const { return CanSemiAutoFire; }
+	FORCEINLINE bool GetCanAutoFire() const { return CanAutoFire; }
+	FORCEINLINE bool GetCanSemiAutoFire() const { return CanSemiAutoFire; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
 	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
 	FORCEINLINE int32 GetClipSize() const { return ClipSize; }

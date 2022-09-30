@@ -39,8 +39,6 @@ ABlasterCharacter::ABlasterCharacter()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
-	TurnRate = 50.f;
-
 	OverheadWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Overhead Widget"));
 	OverheadWidget->SetupAttachment(RootComponent);
 
@@ -356,6 +354,9 @@ void ABlasterCharacter::PlayReloadMontage() const
 		case EWeaponType::EWT_RocketLauncher:
 			SectionName = FName("AssaultRifle");
 			break;
+		case EWeaponType::EWT_HitScan:
+			SectionName = FName("AssaultRifle");
+			break;
 		case EWeaponType::EWT_MAX:
 			SectionName = FName("AssaultRifle");
 			break;
@@ -465,12 +466,6 @@ void ABlasterCharacter::LookUpAtRate(float Value)
 
 void ABlasterCharacter::EquipButtonPressed()
 {
-	// Functionality which is implemented on the local machine.
-	if (Combat)
-	{
-		Combat->SetWeaponRelatedProperties();
-	}
-
 	// Functionality which is implemented on the server to let all the machines know.
 	ServerEquipButtonPressed();
 }

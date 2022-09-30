@@ -84,16 +84,10 @@ private:
 	void FireButtonPressed(bool bPressed);
 	bool bFireButtonPressed;
 
-	/**
-	 *	Set a timer for the automatic fire.
-	 */
+	/** Automatic fire timer */
 	FTimerHandle FireTimer;
 
-	/**
-	 *	bAutomaticFire is not need to be known by other clients and the server. It's just a signal for the local machine,
-	 *	and the local machine will decide to use this signal to multicast fire with a timer or not. So it has not to be
-	 *	transmitted by RPCs and we should set it locally.
-	 */
+	/** Automatic fire flag, we update it in OnRep_EquippedWeapon and on the server equipped */
 	bool bAutomaticFire = true;
 
 	/**
