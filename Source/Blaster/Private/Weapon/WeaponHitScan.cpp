@@ -4,18 +4,18 @@
 #include "Weapon/WeaponHitScan.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Particles/ParticleSystemComponent.h"
 
 void AWeaponHitScan::Fire(const FVector& TraceHitTarget)
 {
 	Super::Fire(TraceHitTarget);
 
-	FireBeam(TraceHitTarget);
+	FireHitScan(TraceHitTarget);
 }
 
-void AWeaponHitScan::FireBeam(const FVector& TraceHitTarget)
+void AWeaponHitScan::FireHitScan(const FVector& TraceHitTarget)
 {
-	const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash"));
-	if (MuzzleFlashSocket)
+	if (const USkeletalMeshSocket* MuzzleFlashSocket = GetWeaponMesh()->GetSocketByName(FName("MuzzleFlash")))
 	{
 		const FVector Start = MuzzleFlashSocket->GetSocketTransform(GetWeaponMesh()).GetLocation();
 		const FVector Direction = TraceHitTarget - Start;
@@ -33,30 +33,38 @@ void AWeaponHitScan::FireBeam(const FVector& TraceHitTarget)
 			);
 		}
 		if (!HitResult.bBlockingHit) return;
+		
+		// Spawn hit particle both on server and clients.
+		UGameplayStatics::SpawnEmitterAtLocation(
+			this,
+			HitParticle,
+			TraceHitTarget
+		);
 
-		// Spawn emitter both on the server and clients.
-		APawn* InstigatorPawn = Cast<APawn>(GetOwner());
-		if (InstigatorPawn)
-		{
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = InstigatorPawn;
-			
-			UGameplayStatics::SpawnEmitterAtLocation(
-				this,
-				HitParticle,
-				TraceHitTarget
-			);
-		}
+		// Spawn beam particle both on server and clients and set the parameter (end location) of the particle emitter (particle system component).
+		UParticleSystemComponent* Beam = UGameplayStatics::SpawnEmitterAtLocation(
+			this,
+			BeamParticle,
+			Start
+		);
+		if (Beam) Beam->SetVectorParameter(FName("Target"), TraceHitTarget);
+
 		// We only want the Damage Process be executed on the server.
 		if (HasAuthority())
 		{
-			UGameplayStatics::ApplyDamage(
-				HitResult.GetActor(),
-				Damage,
-				InstigatorPawn->GetController(),
-				this,
-				UDamageType::StaticClass());
+			APawn* InstigatorPawn = Cast<APawn>(GetOwner());
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = GetOwner();
+			SpawnParams.Instigator = InstigatorPawn;
+			if (InstigatorPawn)
+			{
+				UGameplayStatics::ApplyDamage(
+					HitResult.GetActor(),
+					Damage,
+					InstigatorPawn->GetController(),
+					this,
+					UDamageType::StaticClass());
+			}
 		}
 	}
 }

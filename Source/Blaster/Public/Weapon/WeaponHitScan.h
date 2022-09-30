@@ -19,10 +19,13 @@ protected:
 	virtual void Fire(const FVector& TraceHitTarget) override;
 
 private:
-	void FireBeam(const FVector& TraceHitTarget);
+	void FireHitScan(const FVector& TraceHitTarget);
 
 	UPROPERTY(EditAnywhere)
 	UParticleSystem* HitParticle;
+
+	UPROPERTY(EditAnywhere)
+	UParticleSystem* BeamParticle;
 
 	UPROPERTY(EditAnywhere)
 	float Damage = 15.f;
