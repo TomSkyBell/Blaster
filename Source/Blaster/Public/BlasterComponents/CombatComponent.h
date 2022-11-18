@@ -161,6 +161,7 @@ private:
 	void OnRep_CarriedAmmo();
 
 	void SetHUDCarriedAmmo();
+	void InitCarriedAmmoMap();
 	void AccessCarriedAmmoMap();
 	void UpdateCarriedAmmoMap();
 	void SetHUDWeaponType();

@@ -31,6 +31,8 @@ void UCombatComponent::BeginPlay()
 		InterpFOV = DefaultFOV;
 		if (EquippedWeapon) CrosshairSpread = EquippedWeapon->CrosshairsMinSpread;
 	}
+	// Initialize the CarriedAmmoMap.
+	InitCarriedAmmoMap();
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -229,6 +231,14 @@ void UCombatComponent::SetHUDCarriedAmmo()
 	if (BlasterPlayerController) BlasterPlayerController->UpdateCarriedAmmo(CarriedAmmo);
 }
 
+void UCombatComponent::InitCarriedAmmoMap()
+{
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_AssaultRifle, 10);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_RocketLauncher, 5);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, 30);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SMG, 45);
+}
+
 void UCombatComponent::AccessCarriedAmmoMap()
 {
 	if (!EquippedWeapon) return;
@@ -262,8 +272,11 @@ void UCombatComponent::SetHUDWeaponType()
 	case EWeaponType::EWT_RocketLauncher:
 		WeaponType = FString("Rocket Launcher");
 		break;
-	case EWeaponType::EWT_HitScan:
-		WeaponType = FString("Hit Scan");
+	case EWeaponType::EWT_Pistol:
+		WeaponType = FString("Pistol");
+		break;
+	case EWeaponType::EWT_SMG:
+		WeaponType = FString("SMG");
 		break;
 	case EWeaponType::EWT_MAX:
 		WeaponType = FString("");

@@ -286,7 +286,7 @@ void ABlasterPlayerController::HandleMatchState()
 			!BlasterHUD->GetAnnouncement()->Announce_0 || !BlasterHUD->GetAnnouncement()->Announce_1 ||
 			!BlasterHUD->GetAnnouncement()->WinText) return;
 		
-		BlasterHUD->GetCharacterOverlay()->RemoveFromViewport();
+		BlasterHUD->GetCharacterOverlay()->RemoveFromParent();
 		BlasterHUD->GetAnnouncement()->Announce_0->SetText(FText::FromString("New Match Starts in:"));
 		BlasterHUD->GetAnnouncement()->Announce_1->SetText(FText::FromString(""));
 		BlasterHUD->GetAnnouncement()->SetVisibility(ESlateVisibility::Visible);
