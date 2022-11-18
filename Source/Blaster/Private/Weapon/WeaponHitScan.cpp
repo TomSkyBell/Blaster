@@ -52,11 +52,7 @@ void AWeaponHitScan::FireHitScan(const FVector& TraceHitTarget)
 		// We only want the Damage Process be executed on the server.
 		if (HasAuthority())
 		{
-			APawn* InstigatorPawn = Cast<APawn>(GetOwner());
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = GetOwner();
-			SpawnParams.Instigator = InstigatorPawn;
-			if (InstigatorPawn)
+			if (APawn* InstigatorPawn = Cast<APawn>(GetOwner()))
 			{
 				UGameplayStatics::ApplyDamage(
 					HitResult.GetActor(),

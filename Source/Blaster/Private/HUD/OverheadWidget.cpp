@@ -9,7 +9,15 @@
 void UOverheadWidget::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 {
 	RemoveFromParent();
-	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
+}
+
+bool UOverheadWidget::Initialize()
+{
+	if(!Super::Initialize()) return false;
+
+	FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &UOverheadWidget::OnLevelRemovedFromWorld);
+
+	return true;
 }
 
 void UOverheadWidget::SetDisplayText(FString TextToDisplay)

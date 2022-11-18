@@ -44,6 +44,7 @@ void UMenu::SetupMenu(int32 NumberOfPublicConnections, FString TypeOfMatch, int3
 		MultiplayerSessionsSubsystem->MultiplayerOnStartSessionComplete.AddDynamic(this, &ThisClass::OnStartSession);
 		MultiplayerSessionsSubsystem->MultiplayerOnDestroySessionComplete.AddDynamic(this, &ThisClass::OnDestroySession);
 	}
+	FWorldDelegates::LevelRemovedFromWorld.AddUObject(this, &UMenu::OnLevelRemovedFromWorld);
 }
 
 bool UMenu::Initialize()
@@ -240,12 +241,9 @@ void UMenu::OnDestroySession(bool bWasSuccessful)
 
 }
 
-
-
 void UMenu::OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld)
 {
 	ShutOffMenu();
-	Super::OnLevelRemovedFromWorld(InLevel, InWorld);
 }
 
 

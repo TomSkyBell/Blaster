@@ -13,9 +13,9 @@ UCLASS()
 class BLASTER_API UOverheadWidget : public UUserWidget
 {
 	GENERATED_BODY()
-
+	
 protected:
-	virtual void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) override;
+	void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld);
 
 	UFUNCTION(BlueprintCallable)
 	void ShowPlayerNetRole(APawn* InPawn);
@@ -24,6 +24,8 @@ protected:
 	void ShowPlayerName(APawn* InPawn);
 
 private:
+	virtual bool Initialize() override;
+	
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* DisplayText;
 
