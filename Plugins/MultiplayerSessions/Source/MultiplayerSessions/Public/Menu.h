@@ -61,7 +61,7 @@ private:
 	void OnDestroySession(bool bWasSuccessful);
 
 	// Callback when travel to a new level
-	virtual void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld) override;
+	void OnLevelRemovedFromWorld(ULevel* InLevel, UWorld* InWorld);
 
 	// The subsystem designed to handle all online session functionality
 	UPROPERTY()
