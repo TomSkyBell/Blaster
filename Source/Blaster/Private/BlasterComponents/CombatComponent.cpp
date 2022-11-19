@@ -33,6 +33,8 @@ void UCombatComponent::BeginPlay()
 		InterpFOV = DefaultFOV;
 		if (EquippedWeapon) CrosshairSpread = EquippedWeapon->CrosshairsMinSpread;
 	}
+	// Initialize the CarriedAmmoMap.
+	InitCarriedAmmoMap();
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
