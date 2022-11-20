@@ -360,6 +360,9 @@ void ABlasterCharacter::PlayReloadMontage() const
 		case EWeaponType::EWT_SMG:
 			SectionName = FName("AssaultRifle");
 			break;
+		case EWeaponType::EWT_Shotgun:
+			SectionName = FName("AssaultRifle");
+			break;
 		case EWeaponType::EWT_MAX:
 			SectionName = FName("AssaultRifle");
 			break;
