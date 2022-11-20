@@ -9,8 +9,6 @@
 #include "Weapon/WeaponType.h"
 #include "CombatComponent.generated.h"
 
-#define TRACE_LENGTH 80000.f
-
 UCLASS( ClassGroup=(Combat), meta=(BlueprintSpawnableComponent) )
 class BLASTER_API UCombatComponent : public UActorComponent
 {

@@ -54,8 +54,9 @@ protected:
 		UPrimitiveComponent* OtherComp,
 		int32 OtherBodyIndex
 	);
-	
-	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess))
+
+	/* Weapon Type */
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess), Category = "Weapon Properties")
 	EWeaponType WeaponType;
 
 	/** Class Reference. ProjectileClass can be populated with AProjectile or anything derived from AProjectile. */
@@ -72,13 +73,41 @@ private:
 	UPROPERTY()
 	class ABlasterPlayerController* WeaponOwnerController;
 	
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Component")
 	USkeletalMeshComponent* WeaponMesh;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Component")
 	class USphereComponent* AreaSphere;
 
-	UPROPERTY(VisibleAnywhere, Category = Weapon, ReplicatedUsing = OnRep_WeaponState)
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Component", BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	class UWidgetComponent* PickupWidget;
+
+	/* FOV of aiming */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float Aim_FOV = 45.f;
+
+	/* Zoom speed when aim in. */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float ZoomInSpeed = 20.f;
+
+	/* Zoom speed when aim off. */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float ZoomOutSpeed = 0.f;
+
+	/* Accuracy */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float AimAccuracy = .1f;
+
+	/* Recoil */
+	UPROPERTY(EditAnywhere, Category = Crosshairs)
+	float RecoilFactor = .75f;
+
+	/* The animation of the weapon when it's firing. */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	class UAnimationAsset* FireAnimation;
+
+	/* Weapon State */
+	UPROPERTY(VisibleAnywhere, Category = "Weapon Properties", ReplicatedUsing = OnRep_WeaponState)
 	EWeaponState WeaponState;
 	
 	UFUNCTION()
@@ -86,59 +115,34 @@ private:
 
 	void HandleWeaponState();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Weapon, meta = (AllowPrivateAccess = "true"))
-	class UWidgetComponent* PickupWidget;
-
-	UPROPERTY(EditAnywhere, Category = Weapon)
-	class UAnimationAsset* FireAnimation;
-
-	/**
-	 *	Change camera's FOV when aim zooming
-	 */
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	float Aim_FOV = 45.f;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	float ZoomInSpeed = 20.f;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	float ZoomOutSpeed = 0.f;
-
-	/**
-	 *	Weapon's cross hair's spread when zooming and shooting
-	 */
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	float AimAccuracy = .1f;
-
-	UPROPERTY(EditAnywhere, Category = Crosshairs)
-	float RecoilFactor = .75f;
-
-	/**
-	 *	Weapon's firing properties
-	 */
-	UPROPERTY(EditAnywhere, Category = Fire)
+	/* Speed of firing */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	float FireRate = .05f;
 
-	UPROPERTY(EditAnywhere, Category = Fire)
+	/* If the weapon has auto-fire mode. */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	bool CanAutoFire = true;
 
-	UPROPERTY(EditAnywhere, Category = Fire)
+	/* If the weapon has semi-auto-fire mode. */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	bool CanSemiAutoFire = true;
-	
-	UPROPERTY(EditAnywhere, Category = Fire, ReplicatedUsing = OnRep_Ammo)
+
+	/* Current ammo amount */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties", ReplicatedUsing = OnRep_Ammo)
 	int32 Ammo = 30;
 
-	UPROPERTY(EditAnywhere, Category = Fire)
+	/* Clip size */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
 	int32 ClipSize = 45;
 
+	/* Ammo replication notify */
 	UFUNCTION()
 	virtual void OnRep_Ammo();
 
-	/**
-	 *	We need to make sure the owner exists when we update the ammo HUD which depends on the owner.
-	 */
+	/* We need to make sure the owner exists when we update the ammo HUD which depends on the owner. */
 	virtual void OnRep_Owner() override;
 
+	/* When the weapon is dropped, we should reset the ownership. */
 	void ResetOwnership();
 
 public:

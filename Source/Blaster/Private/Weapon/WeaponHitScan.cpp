@@ -6,51 +6,53 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "Weapon/WeaponType.h"
 
 void AWeaponHitScan::Fire(const FVector& TraceHitTarget)
 {
 	Super::Fire(TraceHitTarget);
 
-	if (bUseScatter)
-	{
-		FireHitScanScatter(TraceHitTarget);
-	}
-	else
-	{
-		FireHitScan(TraceHitTarget);
-	}
+	FireHitScan(TraceHitTarget);
 }
 
-void AWeaponHitScan::FireHitScanScatter(const FVector& TraceHitTarget)
+void AWeaponHitScan::FireHitScan(const FVector& TraceHitTarget)
 {
+	// A map to store the pair of <HitResult.GetActor(), TotalHitNums> so that we can do the ApplyDamage() once for each actor rather than loop it.
+	TMap<AActor*, float> DamageForEachActor;
+	
 	const FVector& Start = GetWeaponMesh()->GetSocketLocation(FName("MuzzleFlash"));
 	const FVector& Dir = TraceHitTarget - Start;
 	
 	// Scatter multiple lines when firing. For-loop each line.
 	for (uint32 i = 0; i < ScatterNum; i++)
 	{
-		// Randomize the shooting direction for the scatter effect.
+		// Randomize the shooting direction for the scatter effect. ScatterDir is a normalized vector.
 		const FVector& ScatterDir = UKismetMathLibrary::RandomUnitVectorInConeInDegrees(Dir, ScatterAngle);
+		const FVector& End = Start + ScatterDir * TRACE_LENGTH;
+		HitScan(DamageForEachActor, Start, End);
+	}
+	// We only want the Damage Process be executed on the server.
+	if (HasAuthority())
+	{
+		// Loop the map and apply the total damage for each actor.
+		for (const auto& Pair: DamageForEachActor)
+		{
+			if (const APawn* InstigatorPawn = Cast<APawn>(GetOwner()))
+			{
+				UGameplayStatics::ApplyDamage(
+					Pair.Key,
+					Pair.Value,
+					InstigatorPawn->GetController(),
+					this,
+					UDamageType::StaticClass());
+			}
+		}
 		
-		// Scatter weapon has a distance limit -- ScatterDist
-		const FVector& End = Start + ScatterDir * ScatterDist;
-		HitScan(Start, End);
 	}
 }
 
-void AWeaponHitScan::FireHitScan(const FVector& TraceHitTarget)
+void AWeaponHitScan::HitScan(TMap<AActor*, float>& DamageForEachActor, const FVector& Start, const FVector& End)
 {
-	const FVector& Start = GetWeaponMesh()->GetSocketLocation(FName("MuzzleFlash"));
-	const FVector Direction = TraceHitTarget - Start;
-
-	// 1.25f is used to make sure the line pierce through the HitActor. If it's 1.f, then End == TraceHitTarget.
-	const FVector End = Start + Direction * 1.25f;
-	HitScan(Start, End);
-}
-
-void AWeaponHitScan::HitScan(const FVector& Start, const FVector& End)
-{
-	// Actually we already know the hit target's location, but we still need to know who it is.
 	FHitResult HitResult;
 	if (GetWorld())
 	{
@@ -80,17 +82,13 @@ void AWeaponHitScan::HitScan(const FVector& Start, const FVector& End)
 		Beam->SetVectorParameter(FName("Target"), HitResult.ImpactPoint);
 	}
 
-	// We only want the Damage Process be executed on the server.
-	if (HasAuthority())
+	// Insert the 'damage for each actor' pair into the map.
+	if (DamageForEachActor.Contains(HitResult.GetActor()))
 	{
-		if (const APawn* InstigatorPawn = Cast<APawn>(GetOwner()))
-		{
-			UGameplayStatics::ApplyDamage(
-				HitResult.GetActor(),
-				Damage,
-				InstigatorPawn->GetController(),
-				this,
-				UDamageType::StaticClass());
-		}
+		DamageForEachActor[HitResult.GetActor()] += Damage;
+	}
+	else
+	{
+		DamageForEachActor.Emplace(HitResult.GetActor(), Damage);
 	}
 }
