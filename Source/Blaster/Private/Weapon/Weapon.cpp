@@ -20,9 +20,11 @@ AWeapon::AWeapon()
 	WeaponMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Weapon Mesh"));
 	SetRootComponent(WeaponMesh);
 
-	// Collision Preset --- Block all the other things except the pawn (so we can step over it once drop the weapon)
+	// Collision Preset --- Block all the other things except the pawn (so we can step over it once drop the weapon),
+	// and the camera to avoid zooming effect.
 	WeaponMesh->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
+	WeaponMesh->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	WeaponMesh->SetSimulatePhysics(true);
 	WeaponMesh->SetEnableGravity(true);
 	WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
@@ -177,10 +179,19 @@ void AWeapon::HandleWeaponState()
 		// When we equip the weapon, we don't have to replicate the movement because the weapon is attached to the character and the character movement is replicated.
 		SetReplicateMovement(false);
 
-		// Set physics simulation, be aware of the sequence.
-		WeaponMesh->SetSimulatePhysics(false);
-		WeaponMesh->SetEnableGravity(false);
-		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// If weapon type is SMG, we just disable the physics simulation of the weapon mesh because physics simulation is incompatible with attaching actor behavior.
+		// But it doesn't affect the strap physics simulation in Weapon Mesh-->Physics Asset-->Physics Type in blueprint.
+		if (WeaponType == EWeaponType::EWT_SMG)
+		{
+			WeaponMesh->SetSimulatePhysics(false);
+		}
+		else
+		{
+			// Set physics simulation, be aware of the sequence.
+			WeaponMesh->SetSimulatePhysics(false);
+			WeaponMesh->SetEnableGravity(false);
+			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 		break;
 		
 	case EWeaponState::EWS_Dropped:
