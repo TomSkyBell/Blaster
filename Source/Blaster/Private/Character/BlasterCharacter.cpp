@@ -254,6 +254,9 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 		
 		// We need to make sure bFireButtonPressed is cleared or the weapon will keep firing because the input is disabled
 		FireButtonReleased();
+
+		// We need to make sure aim button is released so that the sniper scope widget is hidden from the screen.
+		AimButtonReleased();
 	}
 	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
 

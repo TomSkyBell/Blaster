@@ -129,6 +129,8 @@ void UCombatComponent::OnRep_EquippedWeapon()
 
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
+	if (!BlasterCharacter || !EquippedWeapon) return;
+	
 	// If the ownership is self, then we'd better do the 'variable assignment' work in 'Set Aiming' right away rather than waiting for
 	// the 'ServerSetAiming' because ServerSetAiming is the RPC which needs time to transfer the replication from the server to the client.
 	bAiming = bIsAiming;
@@ -139,6 +141,12 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	}
 	// If the ownership is client, it'll be invoked from the server; if the ownership is server, it'll be invoked from the server as well.
 	ServerSetAiming(bIsAiming);
+
+	// Sniper scope effect when aiming. Be aware of IsLocallyControlled check.
+	if (BlasterCharacter->IsLocallyControlled() && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_SniperRifle)
+	{
+		BlasterCharacter->ShowSniperScopeWidget(bIsAiming);
+	}
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)

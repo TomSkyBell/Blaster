@@ -48,6 +48,10 @@ public:
 	void PlayFireMontage(bool bAiming) const;
 	void PlayReloadMontage() const;
 	void Eliminated();
+
+	/* Display the sniper scope effect when aiming. */
+	UFUNCTION(BlueprintImplementableEvent)
+	void ShowSniperScopeWidget(bool bShowScope);
 	
 private:
 	UPROPERTY(VisibleAnywhere, Category = Camera)
