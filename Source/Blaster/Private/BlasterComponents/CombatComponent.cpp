@@ -248,7 +248,8 @@ void UCombatComponent::InitCarriedAmmoMap()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Pistol, 30);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_SMG, 45);
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_Shotgun, 5);
-	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, 1);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_SniperRifle, 3);
+	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, 4);
 }
 
 void UCombatComponent::AccessCarriedAmmoMap()
@@ -292,6 +293,12 @@ void UCombatComponent::SetHUDWeaponType()
 		break;
 	case EWeaponType::EWT_Shotgun:
 		WeaponType = FString("Shotgun");
+		break;
+	case EWeaponType::EWT_SniperRifle:
+		WeaponType = FString("Sniper Rifle");
+		break;
+	case EWeaponType::EWT_GrenadeLauncher:
+		WeaponType = FString("Grenade Launcher");
 		break;
 	case EWeaponType::EWT_MAX:
 		WeaponType = FString("");

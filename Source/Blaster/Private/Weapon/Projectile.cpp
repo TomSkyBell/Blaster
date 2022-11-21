@@ -2,6 +2,8 @@
 
 
 #include "Weapon/Projectile.h"
+
+#include "NiagaraFunctionLibrary.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -80,9 +82,7 @@ void AProjectile::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 
 }
 
-// We gonna make the OnHit function a server-controlled function, just like overlap function. See, on the client end, once OnHit triggered,
-// we cannot see the server's playing montage cuz the client cannot control the server to play montage. So why don't we directly put the
-// logic on the server and use a multi-RPC to wait for the multicast result from the server.
+// OnHit is executed both on the server and clients.
 void AProjectile::OnHit(
 	UPrimitiveComponent* HitComponent,
 	AActor* OtherActor,
@@ -104,6 +104,22 @@ void AProjectile::OnHit(
 	{
 		// Call Destroy() after a period of time.
 		GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &ThisClass::DestroyTimerFinished, DestroyDelay, false);
+	}
+}
+
+void AProjectile::SpawnTrailSystem()
+{
+	// Spawn a niagara system component for control the niagara system.
+	if (TrailSystem)
+	{
+		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
+			TrailSystem,
+			GetRootComponent(),
+			FName(),
+			GetActorLocation(),
+			GetActorRotation(),
+			EAttachLocation::KeepWorldPosition,
+			false);
 	}
 }
 

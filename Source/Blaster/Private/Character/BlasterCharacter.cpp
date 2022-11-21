@@ -369,6 +369,9 @@ void ABlasterCharacter::PlayReloadMontage() const
 		case EWeaponType::EWT_SniperRifle:
 			SectionName = FName("AssaultRifle");
 			break;
+		case EWeaponType::EWT_GrenadeLauncher:
+			SectionName = FName("AssaultRifle");
+			break;
 		case EWeaponType::EWT_MAX:
 			SectionName = FName("AssaultRifle");
 			break;

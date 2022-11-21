@@ -19,14 +19,22 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+	/** We customize the ProjectileMovementComponent to override the UProjectileMovementComponent engine provides.
+	 * We don't initialize it in parent class but let the child class use this feature. */
 	UPROPERTY(VisibleAnywhere)
-	class UProjectileMovementComponent* ProjectileMovementComponent;
+	class UBlasterProjectileMovementComponent* BlasterProjectileMovementComponent;
 
-	UPROPERTY(VisibleAnywhere)
-	class UBoxComponent* CollisionBox;
+	/** Instead of using particle system -- 'Tracer' in the parent class, we use Niagara system here to combine two emitters together
+	 * RocketFireFlash emitter and TrailSmoke emitter. This feature is for child class use. */
+	UPROPERTY(EditAnywhere)
+	class UNiagaraSystem* TrailSystem;
 
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* ProjectileMesh;
+	/* This component is not in the BP panel and we initialize it when BeginPlay(). This feature is for child class use. */
+	UPROPERTY()
+	class UNiagaraComponent* TrailSystemComponent;
+
+	/* Spawn a niagara system for the projectile. */
+	void SpawnTrailSystem();
 
 	/** If we hope destroy the projectile immediately once it's hit */
 	UPROPERTY(EditAnywhere, Category = Weapon)
@@ -41,7 +49,8 @@ protected:
 
 	/** Delegate function for the destroy timer */
 	virtual void DestroyTimerFinished();
-	
+
+	/* OnHit callback function */
 	UFUNCTION()
 	virtual void OnHit(
 		UPrimitiveComponent* HitComponent,
@@ -51,8 +60,9 @@ protected:
 		const FHitResult& Hit
 		);
 
+	/* Once the actor is destroyed, this event happens. */
 	virtual void Destroyed() override;
-
+	
 	/** Projectile Damage of the weapon */
 	UPROPERTY(EditAnywhere, Category = Weapon)
 	float Damage = 10.f;
@@ -74,29 +84,46 @@ protected:
 	float DamageFalloff = 1.f;
 
 private:
+	/* Collision box */
+	UPROPERTY(VisibleAnywhere)
+	class UBoxComponent* CollisionBox;
+
+	/* Projectile mesh */
+	UPROPERTY(VisibleAnywhere)
+	UStaticMeshComponent* ProjectileMesh;
+
+	/* Tracer effect of the projectile */
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* Tracer;
 
+	/* Tracer component */
 	UPROPERTY()
 	class UParticleSystemComponent* TracerComponent;
 
+	/* Tracer sound */
 	UPROPERTY(EditAnywhere)
 	class USoundBase* TracerSound;
 
+	/* Tracer sound component */
 	UPROPERTY()
 	class UAudioComponent* TracerSoundComponent;
-	
+
+	/* Play sound and particle effect. */
 	void HandleHitImpact(AActor* OtherActor);
-	
+
+	/* Particle effect when pawn is hit. */
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* HitEffectForPawn;
 
+	/* Particle effect when stone is hit. */
 	UPROPERTY(EditAnywhere)
 	class UParticleSystem* HitEffectForStone;
-	
+
+	/* Sound effect when pawn is hit. */
 	UPROPERTY(EditAnywhere)
 	class USoundBase* HitSoundForPawn;
 
+	/* Sound effect when stone is hit. */
 	UPROPERTY(EditAnywhere)
 	class USoundBase* HitSoundForStone;
 

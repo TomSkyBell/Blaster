@@ -10,12 +10,12 @@
 AProjectileRocket::AProjectileRocket()
 {
 	// Create a new customized projectile movement component.
-	RocketMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
-	RocketMovementComponent->bRotationFollowsVelocity = true;
-	RocketMovementComponent->SetIsReplicated(true);
-	RocketMovementComponent->InitialSpeed = 2000.f;
-	RocketMovementComponent->MaxSpeed = 2000.f;
-	RocketMovementComponent->ProjectileGravityScale = 0.f;
+	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
+	BlasterProjectileMovementComponent->bRotationFollowsVelocity = true;
+	BlasterProjectileMovementComponent->SetIsReplicated(true);
+	BlasterProjectileMovementComponent->InitialSpeed = 2000.f;
+	BlasterProjectileMovementComponent->MaxSpeed = 2000.f;
+	BlasterProjectileMovementComponent->ProjectileGravityScale = 0.f;
 	
 	// We don't want the rocket destroyed immediately after it's hit, so we need to call the destroy manually after the timer finished.
 	bOnHitDestroy = false;	
@@ -25,17 +25,8 @@ void AProjectileRocket::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (TrailSystem)
-	{
-		TrailSystemComponent = UNiagaraFunctionLibrary::SpawnSystemAttached(
-			TrailSystem,
-			GetRootComponent(),
-			FName(),
-			GetActorLocation(),
-			GetActorRotation(),
-			EAttachLocation::KeepWorldPosition,
-			false);
-	}
+	// Spawn a niagara system component for control the niagara system.
+	SpawnTrailSystem();
 }
 
 void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
@@ -55,6 +46,7 @@ void AProjectileRocket::OnHit(UPrimitiveComponent* HitComponent, AActor* OtherAc
 	}
 
 	// We use the niagara system instead of particle system in the parent, so we need to override part of the functionality.
+	// We should deactivate to stop keeping generating the particle effect.
 	if (TrailSystemComponent && TrailSystemComponent->GetSystemInstanceController())
 	{
 		TrailSystemComponent->GetSystemInstanceController()->Deactivate();

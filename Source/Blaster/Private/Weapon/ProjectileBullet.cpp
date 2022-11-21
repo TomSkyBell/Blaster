@@ -8,11 +8,11 @@
 
 AProjectileBullet::AProjectileBullet()
 {
-	BulletMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
-	BulletMovementComponent->bRotationFollowsVelocity = true;
-	BulletMovementComponent->SetIsReplicated(true);
-	BulletMovementComponent->InitialSpeed = 15000.f;
-	BulletMovementComponent->MaxSpeed = 15000.f;
+	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
+	BlasterProjectileMovementComponent->bRotationFollowsVelocity = true;
+	BlasterProjectileMovementComponent->SetIsReplicated(true);
+	BlasterProjectileMovementComponent->InitialSpeed = 15000.f;
+	BlasterProjectileMovementComponent->MaxSpeed = 15000.f;
 }
 
 // OnHit is executed from the server, OnHit has been bound to delegate by HasAuthority() check, so no need to recheck internal.
