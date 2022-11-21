@@ -20,5 +20,9 @@ public:
 protected:
 	/** Apply Damage when on hit */
 	virtual void OnHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit) override;
-	
+
+private:
+	/** We customize the ProjectileMovementComponent to override the UProjectileMovementComponent engine provides. */
+	UPROPERTY(VisibleAnywhere)
+	class UBlasterProjectileMovementComponent* BlasterProjectileMovementComponent;
 };

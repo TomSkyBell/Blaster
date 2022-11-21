@@ -9,14 +9,15 @@
 
 AProjectileGrenade::AProjectileGrenade()
 {
-	// Customize the projectile movement component.
-	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Grenade Movement Component"));
-	BlasterProjectileMovementComponent->bRotationFollowsVelocity = true;
-	BlasterProjectileMovementComponent->SetIsReplicated(true);
-	BlasterProjectileMovementComponent->bShouldBounce = true;
-	BlasterProjectileMovementComponent->InitialSpeed = 2000.f;
-	BlasterProjectileMovementComponent->MaxSpeed = 2000.f;
-	BlasterProjectileMovementComponent->ProjectileGravityScale = 0.5f;
+	// The reason why we use the projectile movement component here rather than the customized blaster projectile movement component
+	// is that the bounce feature is not compatible with the customized one.
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Grenade Movement Component"));
+	ProjectileMovementComponent->bRotationFollowsVelocity = true;
+	ProjectileMovementComponent->SetIsReplicated(true);
+	ProjectileMovementComponent->bShouldBounce = true;
+	ProjectileMovementComponent->InitialSpeed = 2000.f;
+	ProjectileMovementComponent->MaxSpeed = 2000.f;
+	ProjectileMovementComponent->ProjectileGravityScale = 0.5f;
 
 	// We don't want the grenade destroyed immediately after it's hit, we will call the destroy manually after the timer finished.
 	bOnHitDestroy = false;	
@@ -33,37 +34,42 @@ void AProjectileGrenade::BeginPlay()
 	SpawnTrailSystem();
 	
 	// We should bind to a OnProjectileBounce delegate.
-	BlasterProjectileMovementComponent->OnProjectileBounce.AddDynamic(this, &AProjectileGrenade::OnBounce);
+	ProjectileMovementComponent->OnProjectileBounce.AddDynamic(this, &AProjectileGrenade::OnBounce);
 
 	// Once the projectile is spawned and shot out, we start the destroy timer.
+	// Be aware that once the projectile is destroyed on the server (server maybe quicker) or a client, the other users' projectile have
+	// already been destroyed because the projectile is a replicant, so the result is the functionality before Destroy() not implemented
+	// in time, that's why we need to move the logic into Destroyed() to multicast the functionality.
 	GetWorldTimerManager().SetTimer(DestroyTimerHandle, this, &ThisClass::DestroyTimerFinished, DestroyDelay, false);
 }
 
-void AProjectileGrenade::DestroyTimerFinished()
+void AProjectileGrenade::Destroyed()
 {
-	// Play particle effect
-	UGameplayStatics::SpawnEmitterAtLocation(
-		this,
-		ExplodeEffect,
-		GetActorLocation(),
-		GetActorRotation()
-	);
+	Super::Destroyed();
 
-	// Play sound effect
-	if (ExplodeSound)
+	// Multicast the functionality.
+	ExplodeDamage();
+}
+
+void AProjectileGrenade::OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity)
+{
+	if (BounceSound)
 	{
 		UGameplayStatics::PlaySoundAtLocation(
-			this,
-			ExplodeSound,
-			GetActorLocation(),
-			GetActorRotation(),
-			ExplodeSound->GetVolumeMultiplier(),
-			ExplodeSound->GetPitchMultiplier(),
-			0.f,
-			ExplodeSound->AttenuationSettings
+		this,
+		BounceSound,
+		GetActorLocation(),
+		GetActorRotation(),
+		BounceSound->GetVolumeMultiplier(),
+		BounceSound->GetPitchMultiplier(),
+		0.f,
+		BounceSound->AttenuationSettings
 		);
 	}
+}
 
+void AProjectileGrenade::ExplodeDamage()
+{
 	// ApplyDamage logic can only be executed on the server.
 	if (HasAuthority())
 	{
@@ -83,25 +89,5 @@ void AProjectileGrenade::DestroyTimerFinished()
 				ProjectileInstigator->Controller
 			);
 		}
-	}
-
-	// Destroy the projectile and the niagara system attached to it will also be destroyed.
-	Destroy();
-}
-
-void AProjectileGrenade::OnBounce(const FHitResult& ImpactResult, const FVector& ImpactVelocity)
-{
-	if (BounceSound)
-	{
-		UGameplayStatics::PlaySoundAtLocation(
-		this,
-		BounceSound,
-		GetActorLocation(),
-		GetActorRotation(),
-		BounceSound->GetVolumeMultiplier(),
-		BounceSound->GetPitchMultiplier(),
-		0.f,
-		BounceSound->AttenuationSettings
-		);
 	}
 }

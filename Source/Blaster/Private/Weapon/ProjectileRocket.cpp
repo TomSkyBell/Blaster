@@ -3,14 +3,13 @@
 
 #include "Weapon/ProjectileRocket.h"
 #include "Weapon/BlasterProjectileMovementComponent.h"
-#include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 AProjectileRocket::AProjectileRocket()
 {
 	// Create a new customized projectile movement component.
-	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
+	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Rocket Movement Component"));
 	BlasterProjectileMovementComponent->bRotationFollowsVelocity = true;
 	BlasterProjectileMovementComponent->SetIsReplicated(true);
 	BlasterProjectileMovementComponent->InitialSpeed = 2000.f;
@@ -18,7 +17,7 @@ AProjectileRocket::AProjectileRocket()
 	BlasterProjectileMovementComponent->ProjectileGravityScale = 0.f;
 	
 	// We don't want the rocket destroyed immediately after it's hit, so we need to call the destroy manually after the timer finished.
-	bOnHitDestroy = false;	
+	bOnHitDestroy = true;	
 }
 
 void AProjectileRocket::BeginPlay()

@@ -19,10 +19,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	/** We customize the ProjectileMovementComponent to override the UProjectileMovementComponent engine provides.
-	 * We don't initialize it in parent class but let the child class use this feature. */
+	/* Projectile Movement Component */
 	UPROPERTY(VisibleAnywhere)
-	class UBlasterProjectileMovementComponent* BlasterProjectileMovementComponent;
+	class UProjectileMovementComponent* ProjectileMovementComponent;
 
 	/** Instead of using particle system -- 'Tracer' in the parent class, we use Niagara system here to combine two emitters together
 	 * RocketFireFlash emitter and TrailSmoke emitter. This feature is for child class use. */
@@ -109,22 +108,14 @@ private:
 	class UAudioComponent* TracerSoundComponent;
 
 	/* Play sound and particle effect. */
-	void HandleHitImpact(AActor* OtherActor);
+	void HandleHitImpact();
 
 	/* Particle effect when pawn is hit. */
 	UPROPERTY(EditAnywhere)
-	class UParticleSystem* HitEffectForPawn;
-
-	/* Particle effect when stone is hit. */
-	UPROPERTY(EditAnywhere)
-	class UParticleSystem* HitEffectForStone;
+	class UParticleSystem* HitEffect;
 
 	/* Sound effect when pawn is hit. */
 	UPROPERTY(EditAnywhere)
-	class USoundBase* HitSoundForPawn;
-
-	/* Sound effect when stone is hit. */
-	UPROPERTY(EditAnywhere)
-	class USoundBase* HitSoundForStone;
+	class USoundBase* HitSound;
 
 };

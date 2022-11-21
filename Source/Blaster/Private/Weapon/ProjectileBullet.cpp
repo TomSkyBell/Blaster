@@ -8,7 +8,7 @@
 
 AProjectileBullet::AProjectileBullet()
 {
-	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement"));
+	BlasterProjectileMovementComponent = CreateDefaultSubobject<UBlasterProjectileMovementComponent>(TEXT("Bullet Movement Component"));
 	BlasterProjectileMovementComponent->bRotationFollowsVelocity = true;
 	BlasterProjectileMovementComponent->SetIsReplicated(true);
 	BlasterProjectileMovementComponent->InitialSpeed = 15000.f;

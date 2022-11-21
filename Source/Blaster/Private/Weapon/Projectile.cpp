@@ -2,7 +2,6 @@
 
 
 #include "Weapon/Projectile.h"
-
 #include "NiagaraFunctionLibrary.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/BoxComponent.h"
@@ -91,9 +90,6 @@ void AProjectile::OnHit(
 	const FHitResult& Hit
 	)
 {
-	// Hit impact.
-	HandleHitImpact(OtherActor);
-	
 	// Destroy() works something like a multicast function, it will propagate to the clients and clients do the same work, knowing what happened.
 	// Compared to MulticastRPC, this way can lower the bandwidth.
 	if (bOnHitDestroy)
@@ -131,20 +127,15 @@ void AProjectile::DestroyTimerFinished()
 void AProjectile::Destroyed()
 {
 	Super::Destroyed();
+
+	// Multicast the hit effect and hit sound.
+	HandleHitImpact();
 }
 
-void AProjectile::HandleHitImpact(AActor* OtherActor)
+void AProjectile::HandleHitImpact()
 {
-	if (Cast<ABlasterCharacter>(OtherActor))
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffectForPawn, GetActorLocation());
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSoundForPawn, GetActorLocation());
-	}
-	else
-	{
-		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffectForStone, GetActorLocation());
-		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSoundForStone, GetActorLocation());
-	}
+	UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), HitEffect, GetActorLocation());
+	UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, GetActorLocation());
 	
 	// Since we manually call the destroy() after timer finished, so we need to hide the mesh and disable the collision first.
 	if (ProjectileMesh) ProjectileMesh->SetVisibility(false);
