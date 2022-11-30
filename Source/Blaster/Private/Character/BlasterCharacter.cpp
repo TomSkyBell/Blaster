@@ -355,25 +355,25 @@ void ABlasterCharacter::PlayReloadMontage() const
 			SectionName = FName("AssaultRifle");
 			break;
 		case EWeaponType::EWT_RocketLauncher:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("RocketLauncher");
 			break;
 		case EWeaponType::EWT_Pistol:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("Pistol");
 			break;
 		case EWeaponType::EWT_SMG:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("SMG");
 			break;
 		case EWeaponType::EWT_Shotgun:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("Shotgun");
 			break;
 		case EWeaponType::EWT_SniperRifle:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("SniperRifle");
 			break;
 		case EWeaponType::EWT_GrenadeLauncher:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("GrenadeLauncher");
 			break;
 		case EWeaponType::EWT_MAX:
-			SectionName = FName("AssaultRifle");
+			SectionName = FName("MAX");
 			break;
 		}
 		AnimInstance->Montage_JumpToSection(SectionName);
