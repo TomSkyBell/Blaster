@@ -179,7 +179,6 @@ void UCombatComponent::MulticastFire_Implementation(const FVector_NetQuantize& T
 	AimFactor += EquippedWeapon->GetRecoilFactor();
 	BlasterCharacter->PlayFireMontage(bAiming);
 	EquippedWeapon->Fire(TraceHitTarget);
-	
 }
 
 void UCombatComponent::Fire()
@@ -312,6 +311,12 @@ void UCombatComponent::OnRep_CarriedAmmo()
 {
 	SetHUDCarriedAmmo();
 	UpdateCarriedAmmoMap();
+
+	// Jump to the end section of animation when the carried ammo is not enough to fulfill the clip when reloading the shotgun.
+	if (EquippedWeapon && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && IsCarriedAmmoEmpty())
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 void UCombatComponent::ReloadAnimNotify()
@@ -346,6 +351,37 @@ void UCombatComponent::ReloadAnimNotify()
 	if (bFireButtonPressed && bAutomaticFire) Fire();
 }
 
+void UCombatComponent::ShotgunShellAnimNotify()
+{
+	if (!EquippedWeapon || !BlasterCharacter || !BlasterCharacter->GetMesh()) return;
+
+	// Recover the Combat State, though we are still reloading, but the shotgun reload mechanism is special, it can be
+	// interrupted by the fire button after reload an ammo, so we reset the combat state.
+	BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
+	
+	// For shotgun, change 1 ammo per reload.
+	EquippedWeapon->SetAmmo(EquippedWeapon->GetAmmo() + 1);
+	EquippedWeapon->SetHUDAmmo();
+	
+	CarriedAmmo -= 1;
+	SetHUDCarriedAmmo();
+	UpdateCarriedAmmoMap();
+
+	// If the clip is full or the carried ammo is all reloaded, we directly jump to the end of the animation.
+	// Remember to do the work in OnRep_Ammo() and OnRep_CarriedAmmo().
+	if (EquippedWeapon->IsAmmoFull() || CarriedAmmo == 0) JumpToShotgunEnd();
+}
+
+void UCombatComponent::JumpToShotgunEnd()
+{
+	UAnimInstance* AnimInstance = BlasterCharacter->GetMesh()->GetAnimInstance();
+	if (AnimInstance && BlasterCharacter->GetReloadMontage())
+	{
+		// Interrupt the animation right now.
+		AnimInstance->Montage_JumpToSection(FName("EndShotgun"));
+	}
+}
+
 void UCombatComponent::ServerReload_Implementation()
 {
 	if (!BlasterCharacter || IsCarriedAmmoEmpty() || CombatState == ECombatState::ECS_Reloading ||
@@ -364,13 +400,15 @@ void UCombatComponent::Reload()
 void UCombatComponent::ReloadAmmoAmount()
 {
 	if (!EquippedWeapon || !EquippedWeapon->IsAmmoValid()) return;
-	
+
+	// If the carried ammo is enough to full the clip after reloading.
 	if (CarriedAmmo >= (EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo()))
 	{
 		// Sequence is important
 		CarriedAmmo -= EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo();
 		EquippedWeapon->SetAmmo(EquippedWeapon->GetClipSize());
 	}
+	// If the carried ammo cannot full the clip after reloading.
 	else
 	{
 		// Sequence is important

@@ -24,8 +24,15 @@ public:
 	FORCEINLINE void SetCombatState(const ECombatState State) { CombatState = State; }
 	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo <= 0; }
 	
-	// Animation Notify access.
+	/* Reload Animation Notify, we call it directly in AnimNotifyReload.cpp */
 	void ReloadAnimNotify();
+
+	/* Reload the shotgun AnimNotify, we call it in BP. */
+	UFUNCTION(BlueprintCallable)
+	void ShotgunShellAnimNotify();
+
+	/* Jump to end section of the animation */
+	void JumpToShotgunEnd();
 
 protected:
 	virtual void BeginPlay() override;
@@ -149,9 +156,7 @@ private:
 	 */
 	FColor CrosshairColor = FColor::White;
 
-	/**
-	 * Carried Ammo
-	 */
+	/* Carried Ammo, right part of xxx/xxx, which means the total ammo except for the part in the clip. */
 	UPROPERTY(EditAnywhere, Category = Ammo, ReplicatedUsing = OnRep_CarriedAmmo)
 	int32 CarriedAmmo = 0;
 

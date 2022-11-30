@@ -2,6 +2,8 @@
 
 
 #include "Weapon/Weapon.h"
+
+#include "BlasterComponents/CombatComponent.h"
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
@@ -131,6 +133,14 @@ void AWeapon::SpendRound()
 void AWeapon::OnRep_Ammo()
 {
 	SetHUDAmmo();
+
+	WeaponOwnerCharacter = WeaponOwnerCharacter ? WeaponOwnerCharacter : Cast<ABlasterCharacter>(GetOwner());
+	
+	// Jump to the end section of animation when the clip is full when reloading the shotgun.
+	if (WeaponOwnerCharacter->GetCombat() && WeaponType == EWeaponType::EWT_Shotgun && IsAmmoFull())
+	{
+		WeaponOwnerCharacter->GetCombat()->JumpToShotgunEnd();
+	}
 }
 
 void AWeapon::SetHUDAmmo()

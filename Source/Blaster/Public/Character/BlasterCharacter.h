@@ -199,7 +199,10 @@ private:
 public:
 	bool IsWeaponEquipped() const;
 	bool IsAiming() const;
+
+	UFUNCTION(BlueprintCallable)
 	UCombatComponent* GetCombat() const { return Combat ? Combat : nullptr; }
+	
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
 	FORCEINLINE FTransform GetLeftHandTransform() const { return LeftHandTransform; }
@@ -214,4 +217,5 @@ public:
 	FORCEINLINE void SetIsRespawned(bool bIsRespawned) { IsRespawned = bIsRespawned; }
 	ECombatState GetCombatState() const;
 	void SetCombatState(ECombatState State);
+	UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 };
