@@ -145,6 +145,9 @@ private:
 	/* When the weapon is dropped, we should reset the ownership. */
 	void ResetOwnership();
 
+	/* RenderCustomDepthPass -- Stencil */
+	void SetCustomDepth(bool bEnabled);
+
 public:
 	FORCEINLINE USphereComponent* GetAreaSphere() const { return AreaSphere; }
 	FORCEINLINE USkeletalMeshComponent* GetWeaponMesh() const { return WeaponMesh; }

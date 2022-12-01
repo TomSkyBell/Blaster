@@ -37,6 +37,11 @@ AWeapon::AWeapon()
 	AreaSphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 	AreaSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// Enable it when we on the server machine
 
+	// Render -- Custom Depth Stencil
+	WeaponMesh->SetRenderCustomDepth(true);
+	
+	
+	// Widget configuration.
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Weapon Widget"));
 	PickupWidget->SetupAttachment(RootComponent);
 	PickupWidget->SetVisibility(false);
@@ -173,6 +178,18 @@ void AWeapon::ResetOwnership()
 	WeaponOwnerController = nullptr;
 }
 
+void AWeapon::SetCustomDepth(const bool bEnabled)
+{
+	if (!WeaponMesh) return;
+
+	WeaponMesh->SetRenderCustomDepth(bEnabled);
+	if (bEnabled)
+	{
+		WeaponMesh->SetCustomDepthStencilValue(DEPTH_PURPLE);
+		WeaponMesh->MarkRenderStateDirty();
+	}
+}
+
 void AWeapon::HandleWeaponState()
 {
 	// Change the weapon's pickup widget in Server World to be invisible 
@@ -202,6 +219,8 @@ void AWeapon::HandleWeaponState()
 			WeaponMesh->SetEnableGravity(false);
 			WeaponMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
+		// Cancel the stencil -- Outline effect when equipping the weapon.
+		SetCustomDepth(false);
 		break;
 		
 	case EWeaponState::EWS_Dropped:
@@ -217,6 +236,9 @@ void AWeapon::HandleWeaponState()
 		WeaponMesh->SetSimulatePhysics(true);
 		WeaponMesh->SetEnableGravity(true);
 		WeaponMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+		// Enable the stencil -- Outline effect when the weapon is dropped to attract the players.
+		SetCustomDepth(true);
 		break;
 
 	case EWeaponState::EWS_Initial:
