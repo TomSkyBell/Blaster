@@ -387,19 +387,24 @@ void UCombatComponent::JumpToShotgunEnd()
 	}
 }
 
-void UCombatComponent::ServerReload_Implementation()
+void UCombatComponent::ThrowGrenadeAnimNotify()
 {
-	if (!BlasterCharacter || IsCarriedAmmoEmpty() || CombatState == ECombatState::ECS_Reloading ||
-		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
-
-	// CombatState Replication, we put reload logic in AnimMontage's Notify
-	CombatState = ECombatState::ECS_Reloading;
-	BlasterCharacter->PlayReloadMontage();
+	SetCombatState(ECombatState::ECS_Unoccupied);
 }
 
 void UCombatComponent::Reload()
 {
 	ServerReload();
+}
+
+void UCombatComponent::ServerReload_Implementation()
+{
+	if (!BlasterCharacter || IsCarriedAmmoEmpty() || CombatState != ECombatState::ECS_Unoccupied ||
+		!EquippedWeapon || EquippedWeapon->IsAmmoFull()) return;
+
+	// CombatState Replication, we put reload logic in AnimMontage's Notify
+	CombatState = ECombatState::ECS_Reloading;
+	BlasterCharacter->PlayReloadMontage();
 }
 
 void UCombatComponent::ReloadAmmoAmount()
@@ -422,6 +427,19 @@ void UCombatComponent::ReloadAmmoAmount()
 	}
 }
 
+void UCombatComponent::ThrowGrenade()
+{
+	ServerThrowGrenade();
+}
+
+void UCombatComponent::ServerThrowGrenade_Implementation()
+{
+	if (!BlasterCharacter || CombatState != ECombatState::ECS_Unoccupied) return;
+	
+	SetCombatState(ECombatState::ECS_Throwing);
+	BlasterCharacter->PlayThrowGrenadeMontage();
+}
+
 void UCombatComponent::OnRep_CombatState()
 {
 	if (!BlasterCharacter) return;
@@ -432,6 +450,9 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 	case ECombatState::ECS_Reloading:
 		BlasterCharacter->PlayReloadMontage();
+		break;
+	case ECombatState::ECS_Throwing:
+		BlasterCharacter->PlayThrowGrenadeMontage();
 		break;
 	case ECombatState::ECS_MAX:
 		break;

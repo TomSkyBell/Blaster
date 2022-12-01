@@ -42,11 +42,13 @@ private:
 	void FireButtonReleased();
 	void SwitchFireModeButtonPressed();
 	void ReloadButtonPressed();
+	void ThrowButtonPressed();
 
 public:
 	void SetOverlappingWeapon(class AWeapon* Weapon);
 	void PlayFireMontage(bool bAiming) const;
 	void PlayReloadMontage() const;
+	void PlayThrowGrenadeMontage() const;
 	void Eliminated();
 
 	/* Display the sniper scope effect when aiming. */
@@ -114,6 +116,9 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ReloadMontage;
+
+	UPROPERTY(EditAnywhere, Category = Combat)
+	UAnimMontage* ThrowGrenadeMontage;
 
 	/**
 	 *	Set a threshold between camera and the character to avoid blocking.

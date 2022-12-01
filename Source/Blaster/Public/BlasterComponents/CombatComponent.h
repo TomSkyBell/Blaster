@@ -34,6 +34,10 @@ public:
 	/* Jump to end section of the animation */
 	void JumpToShotgunEnd();
 
+	/* Throw the grenade AnimNotify, we call it in BP. */
+	UFUNCTION(BlueprintCallable)
+	void ThrowGrenadeAnimNotify();
+
 protected:
 	virtual void BeginPlay() override;
 	void SetAiming(bool bIsAiming);
@@ -119,7 +123,6 @@ private:
 	void UpdateCrosshairSpread(float DeltaTime);
 	void UpdateHUDCrosshairs(float DeltaTime);
 	void SetHUDPackage();
-	void SetWeaponRelatedProperties();
 	
 	float VelocityFactor = 0.f;
 	
@@ -172,19 +175,22 @@ private:
 	UPROPERTY(EditAnywhere, Category = Ammo)
 	TMap<EWeaponType, int32> CarriedAmmoMap;
 
-	/**
-	 *	Reload
-	 */
+	/* Reload */
+	void Reload();
+	
 	UFUNCTION(Server, Reliable)
 	void ServerReload();
 	
-	void Reload();
-
 	void ReloadAmmoAmount();
 
-	/**
-	 *	Combat State
-	 */
+	/* Throw Grenade */
+	void ThrowGrenade();
+
+	UFUNCTION(Server, Reliable)
+	void ServerThrowGrenade();
+
+	/* Combat State */
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState;
 
