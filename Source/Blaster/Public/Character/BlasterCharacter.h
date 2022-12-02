@@ -120,15 +120,11 @@ private:
 	UPROPERTY(EditAnywhere, Category = Combat)
 	UAnimMontage* ThrowGrenadeMontage;
 
-	/**
-	 *	Set a threshold between camera and the character to avoid blocking.
-	 */
+	/* Set a threshold between camera and the character to avoid blocking. */
 	UPROPERTY(EditAnywhere, Category = Camera)
 	float CameraThreshold = 200.f;
 
-	/**
-	 *	Check if camera is too close with the character, if so, hide the character to avoid blocking the vision.
-	 */
+	/* Check if camera is too close with the character, if so, hide the character to avoid blocking the vision. */
 	void HideCharacterIfClose();
 
 	/**
@@ -169,16 +165,17 @@ private:
 	
 
 	/**
-	 *	Dissolve Effect
+	 *	FX -- Elimination
 	 */
+	
 	UPROPERTY(VisibleAnywhere, Category = Elim)
 	UTimelineComponent* TimelineComponent;
-
+	
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UCurveFloat* DissolveCurve;
 
 	FOnTimelineFloat DissolveTrack;
-
+	
 	UFUNCTION()
 	void UpdateMaterial(float CurveValue);
 
@@ -189,10 +186,7 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UMaterialInstance* DissolveMatInst;
-
-	/**
-	 *	Eliminated Particle Effect -- Robot
-	 */
+	
 	UPROPERTY(EditAnywhere, Category = Elim)
 	UParticleSystem* ElimBot;
 
@@ -200,6 +194,13 @@ private:
 	USoundBase* ElimBotSound;
 
 	void PlayElimBotEffect();
+
+	/**
+	 *	Attachment -- Grenade Mesh
+	 */
+
+	UPROPERTY(VisibleAnywhere, Category = Attachment)
+	UStaticMeshComponent* GrenadeAttached;
 
 public:
 	bool IsWeaponEquipped() const;

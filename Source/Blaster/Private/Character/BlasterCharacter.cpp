@@ -47,14 +47,21 @@ ABlasterCharacter::ABlasterCharacter()
 
 	TimelineComponent = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline Component"));
 
+	// Grenade attachment to the socket and set its collision
+	GrenadeAttached = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GrenadeAttached"));
+	GrenadeAttached->SetupAttachment(GetMesh(), FName("GrenadeAttached"));
+	GrenadeAttached->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	// Avoid the zooming effect (camera overlaps with the character)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 	GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Visibility, ECollisionResponse::ECR_Block);
 	GetMesh()->SetCollisionObjectType(ECC_SkeletalMesh);
 
+	// Initialize the character status.
 	TurningInPlace = ETurningInPlace::ETIP_NotTurning;
 
+	// Net update frequency.
 	NetUpdateFrequency = 66.f;
 	MinNetUpdateFrequency = 33.f;
 }
