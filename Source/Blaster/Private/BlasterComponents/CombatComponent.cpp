@@ -67,23 +67,27 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 {
 	if (!BlasterCharacter || !WeaponToEquip) return;
 
+	// Drop equipped weapon.
 	if (EquippedWeapon) EquippedWeapon->Dropped();
-	
+
+	// Set weapon and its state.
 	EquippedWeapon = WeaponToEquip;
 	bAutomaticFire = EquippedWeapon->GetCanAutoFire();
 	EquippedWeapon->SetWeaponState(EWeaponState::EWS_Equipped);
-	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
-	{
-		// Automatically propagated to the clients, that's why we don't need to do attachment on the client again.
-		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
-	}
-	// SetOwner() is a replication process, no need to redo it in OnRep.
+
+	// Automatically propagated to the clients, that's why we don't need to do attachment on the client again.
+	AttachWeaponToRightHand();
+	
+	// Owner is built-in replicated variable.
 	EquippedWeapon->SetOwner(BlasterCharacter);
+
+	// Initialize the HUD and Ammo Map.
 	EquippedWeapon->SetHUDAmmo();
 	AccessCarriedAmmoMap();
 	SetHUDCarriedAmmo();
 	SetHUDWeaponType();
 
+	// Play equip sound.
 	if (BlasterCharacter->IsLocallyControlled())
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, EquippedWeapon->EquippedSound, BlasterCharacter->GetActorLocation(), FRotator::ZeroRotator);
@@ -105,7 +109,7 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	/**************************************** Repnotify & Multicast Sequence Conflicts *******************************************/
 	
 	// SetWeaponState() can be only executed from the server, but we still set up here because of the replication delay, specifically,
-	// AttachActor needs the weapon to be set simulated physics, and this property is set when we do SetWeaponState() and it needs some
+	// AttachActor needs the weapon to be set simulated physics false, and this property is set when we do SetWeaponState() and it needs
 	// time to replicate from the server to the client, which means when we attach actor on the server, the multicast speed is faster than
 	// the RepNotify, so when the client attach actor, it will fail because the Simulate Physics is not updated in time.
 	if (!EquippedWeapon || !BlasterCharacter || !BlasterCharacter->GetMesh()) return;
@@ -355,9 +359,9 @@ void UCombatComponent::ShotgunShellAnimNotify()
 {
 	// Once from the server 'PlayReloadMontage' is called, it has a multicast effect that the client will also plays the
 	// montage, so we need to check the authority.
-	if (BlasterCharacter->HasAuthority())
+	if (BlasterCharacter && BlasterCharacter->HasAuthority())
 	{
-		if (!EquippedWeapon || !BlasterCharacter || !BlasterCharacter->GetMesh()) return;
+		if (!EquippedWeapon || !BlasterCharacter->GetMesh()) return;
 
 		// Recover the Combat State, though we are still reloading, but the shotgun reload mechanism is special, it can be
 		// interrupted by the fire button after reload an ammo, so we reset the combat state.
@@ -389,7 +393,13 @@ void UCombatComponent::JumpToShotgunEnd()
 
 void UCombatComponent::ThrowGrenadeAnimNotify()
 {
-	SetCombatState(ECombatState::ECS_Unoccupied);
+	if (BlasterCharacter && BlasterCharacter->HasAuthority())
+	{
+		SetCombatState(ECombatState::ECS_Unoccupied);
+
+		// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+		AttachWeaponToRightHand();
+	}
 }
 
 void UCombatComponent::Reload()
@@ -437,7 +447,33 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	if (!BlasterCharacter || CombatState != ECombatState::ECS_Unoccupied) return;
 	
 	SetCombatState(ECombatState::ECS_Throwing);
+
+	// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+	AttachWeaponToLeftHand();
+	
 	BlasterCharacter->PlayThrowGrenadeMontage();
+}
+
+void UCombatComponent::AttachWeaponToLeftHand()
+{
+	if (!BlasterCharacter || !BlasterCharacter->GetMesh() || !EquippedWeapon) return;
+	
+	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("LeftHandSocket")))
+	{
+		// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
+	}
+}
+
+void UCombatComponent::AttachWeaponToRightHand()
+{
+	if (!BlasterCharacter || !BlasterCharacter->GetMesh() || !EquippedWeapon) return;
+		
+	if (const USkeletalMeshSocket* HandSocket = BlasterCharacter->GetMesh()->GetSocketByName(FName("RightHandSocket")))
+	{
+		// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+		HandSocket->AttachActor(EquippedWeapon, BlasterCharacter->GetMesh());
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()

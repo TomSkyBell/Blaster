@@ -189,8 +189,11 @@ private:
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
 
-	/* Combat State */
+	/* Attach the weapon to hand when throwing the grenade */
+	void AttachWeaponToLeftHand();
+	void AttachWeaponToRightHand();
 
+	/* Combat State */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState;
 
