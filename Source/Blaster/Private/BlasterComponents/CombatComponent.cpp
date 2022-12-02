@@ -131,6 +131,13 @@ void UCombatComponent::OnRep_EquippedWeapon()
 	}
 }
 
+void UCombatComponent::SetCombatState(const ECombatState State)
+{
+	CombatState = State;
+
+	HandleCombatState();
+}
+
 void UCombatComponent::SetAiming(bool bIsAiming)
 {
 	if (!BlasterCharacter || !EquippedWeapon) return;
@@ -397,9 +404,20 @@ void UCombatComponent::ThrowGrenadeAnimNotify()
 	{
 		SetCombatState(ECombatState::ECS_Unoccupied);
 
-		// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+		// AttachActor() executed on server has a multicast effect.
 		AttachWeaponToRightHand();
 	}
+}
+
+void UCombatComponent::LaunchGrenadeAnimNotify()
+{
+	// There is no replication, so we don't need to check has authority.
+	
+	// Spawn and launch the grenade.
+	
+
+	// Hide the grenade attached mesh.
+	ShowGrenadeAttached(false);
 }
 
 void UCombatComponent::Reload()
@@ -448,7 +466,7 @@ void UCombatComponent::ServerThrowGrenade_Implementation()
 	
 	SetCombatState(ECombatState::ECS_Throwing);
 
-	// AttachActor() executed on server has a multicast effect, so no need to call it in OnRep_().
+	// AttachActor() executed on server has a multicast effect.
 	AttachWeaponToLeftHand();
 	
 	BlasterCharacter->PlayThrowGrenadeMontage();
@@ -476,7 +494,19 @@ void UCombatComponent::AttachWeaponToRightHand()
 	}
 }
 
+void UCombatComponent::ShowGrenadeAttached(bool IsVisible)
+{
+	if (!BlasterCharacter || !BlasterCharacter->GetGrenadeAttached()) return;
+	
+	BlasterCharacter->GetGrenadeAttached()->SetVisibility(IsVisible);
+}
+
 void UCombatComponent::OnRep_CombatState()
+{
+	HandleCombatState();
+}
+
+void UCombatComponent::HandleCombatState()
 {
 	if (!BlasterCharacter) return;
 
@@ -489,12 +519,12 @@ void UCombatComponent::OnRep_CombatState()
 		break;
 	case ECombatState::ECS_Throwing:
 		BlasterCharacter->PlayThrowGrenadeMontage();
+		ShowGrenadeAttached(true);
 		break;
 	case ECombatState::ECS_MAX:
 		break;
 	}
 }
-
 
 
 

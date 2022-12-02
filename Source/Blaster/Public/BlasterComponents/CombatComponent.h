@@ -21,22 +21,26 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
-	FORCEINLINE void SetCombatState(const ECombatState State) { CombatState = State; }
+	void SetCombatState(const ECombatState State);
 	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo <= 0; }
 	
 	/* Reload Animation Notify, we call it directly in AnimNotifyReload.cpp */
 	void ReloadAnimNotify();
 
-	/* Reload the shotgun AnimNotify, we call it in BP. */
+	/* Reload the shotgun AnimNotify. */
 	UFUNCTION(BlueprintCallable)
 	void ShotgunShellAnimNotify();
 
 	/* Jump to end section of the animation */
 	void JumpToShotgunEnd();
 
-	/* Throw the grenade AnimNotify, we call it in BP. */
+	/* Throw the grenade AnimNotify. */
 	UFUNCTION(BlueprintCallable)
 	void ThrowGrenadeAnimNotify();
+
+	/* Launch the grenade AnimNotify. */
+	UFUNCTION(BlueprintCallable)
+	void LaunchGrenadeAnimNotify();
 
 protected:
 	virtual void BeginPlay() override;
@@ -193,10 +197,15 @@ private:
 	void AttachWeaponToLeftHand();
 	void AttachWeaponToRightHand();
 
+	/* Show the grenade when throwing and hide the grenade when launching it. */
+	void ShowGrenadeAttached(bool IsVisible);
+
 	/* Combat State */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"), ReplicatedUsing = OnRep_CombatState)
 	ECombatState CombatState;
 
 	UFUNCTION()
 	void OnRep_CombatState();
+
+	void HandleCombatState();
 };

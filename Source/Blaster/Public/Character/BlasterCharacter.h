@@ -224,4 +224,5 @@ public:
 	ECombatState GetCombatState() const;
 	void SetCombatState(ECombatState State);
 	UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
+	UStaticMeshComponent* GetGrenadeAttached() const { return GrenadeAttached; }
 };

@@ -51,6 +51,7 @@ ABlasterCharacter::ABlasterCharacter()
 	GrenadeAttached = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GrenadeAttached"));
 	GrenadeAttached->SetupAttachment(GetMesh(), FName("GrenadeAttached"));
 	GrenadeAttached->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GrenadeAttached->SetVisibility(false);
 
 	// Avoid the zooming effect (camera overlaps with the character)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
