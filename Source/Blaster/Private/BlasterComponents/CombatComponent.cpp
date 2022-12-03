@@ -412,10 +412,12 @@ void UCombatComponent::ThrowGrenadeAnimNotify()
 
 void UCombatComponent::LaunchGrenadeAnimNotify()
 {
-	// Spawn on the server and replicate on all clients because grenade is a replicate.
-	if (BlasterCharacter && BlasterCharacter->HasAuthority())
+	// 1. Spawn on the server and replicate on all clients because grenade is a replicate.
+	// 2. Besides, use a server RPC to transmit the local variable HitTarget.
+	// 3. Last, the client calling server RPC must own the actor. If client2 execute client1's Server RPC, it will create error.
+	if (BlasterCharacter && BlasterCharacter->IsLocallyControlled())
 	{
-		LaunchGrenade();
+		ServerLaunchGrenade(HitTarget);
 	}
 	// Hide the grenade mesh on all machine.
 	ShowGrenadeAttached(false);
@@ -461,14 +463,14 @@ void UCombatComponent::ThrowGrenade()
 	ServerThrowGrenade();
 }
 
-void UCombatComponent::LaunchGrenade()
+void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuantize& Target)
 {
 	if (!BlasterCharacter || !BlasterCharacter->GetMesh()) return;
 	
 	// Spawn and launch grenade.
 	if (const UStaticMeshComponent* Grenade = BlasterCharacter->GetGrenadeAttached())
 	{
-		const FVector Dir = HitTarget - Grenade->GetComponentLocation();
+		const FVector Dir = Target - Grenade->GetComponentLocation();
 
 		// The socket location is in the collision range of hand's capsule mesh, so we need to spawn a bit further from the
 		// original location to avoid collision.

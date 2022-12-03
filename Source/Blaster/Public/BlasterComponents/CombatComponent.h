@@ -213,7 +213,6 @@ private:
 
 	
 	void ThrowGrenade();
-	void LaunchGrenade();
 	
 	/* Attach the weapon to hand when throwing the grenade */
 	void AttachWeaponToLeftHand();
@@ -221,6 +220,10 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void ServerThrowGrenade();
+
+	/* Used to transmit the local variable -- HitTarget */
+	UFUNCTION(Server, Reliable)
+	void ServerLaunchGrenade(const FVector_NetQuantize& Target);
 
 	/* Show the grenade when throwing and hide the grenade when launching it. */
 	void ShowGrenadeAttached(bool IsVisible);
