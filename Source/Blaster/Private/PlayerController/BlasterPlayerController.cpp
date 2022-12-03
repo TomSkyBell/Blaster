@@ -41,8 +41,7 @@ void ABlasterPlayerController::OnPossess(APawn* InPawn)
 	{
 		// OnPossess() is only executed from the server, so we make a replicated variable IsRespawned to make each controller's
 		// HUD be refreshed since respawned.
-		BlasterCharacter->SetIsRespawned(true);
-		RefreshHUD();
+		BlasterCharacter->SetIsRespawned();
 	}
 }
 
@@ -124,6 +123,15 @@ void ABlasterPlayerController::UpdateWeaponType(const FString& WeaponType)
 	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->WeaponType) return;
 	
 	BlasterHUD->GetCharacterOverlay()->WeaponType->SetText(FText::FromString(WeaponType));
+}
+
+void ABlasterPlayerController::UpdateGrenade(int32 GrenadeAmount)
+{
+	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
+	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->GrenadeAmount) return;
+
+	const FString GrenadeAmountStr = FString::Printf(TEXT("%d"), GrenadeAmount);
+	BlasterHUD->GetCharacterOverlay()->GrenadeAmount->SetText(FText::FromString(GrenadeAmountStr));
 }
 
 void ABlasterPlayerController::UpdateAnnouncement(int32 Countdown)
@@ -244,15 +252,7 @@ void ABlasterPlayerController::SetHUDTime()
 void ABlasterPlayerController::RefreshHUD()
 {
 	BlasterHUD = BlasterHUD ? BlasterHUD : Cast<ABlasterHUD>(GetHUD());
-	if (!BlasterHUD || !BlasterHUD->GetCharacterOverlay() || !BlasterHUD->GetCharacterOverlay()->DefeatedMsg) return;
-
-	UCharacterOverlay* CharacterOverlay = BlasterHUD->GetCharacterOverlay();
-	CharacterOverlay->DefeatedMsg->SetVisibility(ESlateVisibility::Hidden);
-	if (CharacterOverlay->IsAnimationPlaying(CharacterOverlay->DefeatedMsgAnim))
-	{
-		CharacterOverlay->StopAnimation(CharacterOverlay->DefeatedMsgAnim);
-	}
-	UpdatePlayerHealth(100.f, 100.f);
+	if (BlasterHUD) BlasterHUD->Refresh();
 }
 
 void ABlasterPlayerController::OnMatchStateSet(FName State)

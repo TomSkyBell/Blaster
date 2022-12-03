@@ -2,11 +2,12 @@
 
 
 #include "HUD/BlasterHUD.h"
-
 #include "Components/TextBlock.h"
 #include "HUD/CharacterOverlay.h"
-#include "GameFramework/PlayerController.h"
 #include "HUD/AnnouncementWidget.h"
+#include "Character/BlasterCharacter.h"
+#include "BlasterComponents/CombatComponent.h"
+#include "PlayerController/BlasterPlayerController.h"
 
 // The DrawHUD function will be automatically called when we set the default HUD as BP_BlasterHUD in BP_GameMode settings.
 void ABlasterHUD::DrawHUD()
@@ -40,7 +41,8 @@ void ABlasterHUD::AddCharacterOverlay()
 	{
 		CharacterOverlay = CreateWidget<UCharacterOverlay>(GetWorld(), CharacterOverlayClass, FName("Character Overlay"));
 		if (!CharacterOverlay) return;
-		
+
+		Refresh();
 		CharacterOverlay->AddToViewport();
 	}
 }
@@ -54,6 +56,28 @@ void ABlasterHUD::AddAnnouncement()
 		if (!Announcement) return;
 		
 		Announcement->AddToViewport();
+	}
+}
+
+void ABlasterHUD::Refresh()
+{
+	if (CharacterOverlay && CharacterOverlay->DefeatedMsg)
+	{
+		CharacterOverlay->DefeatedMsg->SetVisibility(ESlateVisibility::Hidden);
+		if (CharacterOverlay->IsAnimationPlaying(CharacterOverlay->DefeatedMsgAnim))
+		{
+			CharacterOverlay->StopAnimation(CharacterOverlay->DefeatedMsgAnim);
+		}
+	}
+	// We need player controller and player character because the data is stored there.
+	if (ABlasterPlayerController* BlasterPlayerController = Cast<ABlasterPlayerController>(GetOwningPlayerController()))
+	{
+		BlasterPlayerController->UpdatePlayerHealth(100.f, 100.f);
+		const ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(BlasterPlayerController->GetCharacter());
+		if (BlasterCharacter && BlasterCharacter->GetCombat())
+		{
+			BlasterPlayerController->UpdateGrenade(BlasterCharacter->GetCombat()->GetGrenadeAmount());
+		}
 	}
 }
 

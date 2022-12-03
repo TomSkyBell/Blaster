@@ -231,10 +231,7 @@ void ABlasterCharacter::OnRep_Health()
 
 void ABlasterCharacter::OnRep_IsRespawned()
 {
-	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
-	if (!BlasterPlayerController) return;
-	
-	BlasterPlayerController->RefreshHUD();
+	HandleIsRespawned();
 }
 
 void ABlasterCharacter::MulticastEliminated_Implementation()
@@ -260,9 +257,6 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 		
 		// We need to make sure bFireButtonPressed is cleared or the weapon will keep firing because the input is disabled
 		FireButtonReleased();
-
-		// We need to make sure aim button is released so that the sniper scope widget is hidden from the screen.
-		AimButtonReleased();
 	}
 	IsAiming() ? PlayDeathIronMontage() : PlayDeathHipMontage();
 
@@ -275,6 +269,9 @@ void ABlasterCharacter::MulticastEliminated_Implementation()
 // In this function, DamagedActor == this, so it's a little bit over-defined.
 void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const UDamageType* DamageType, AController* InstigatedBy, AActor* DamageCauser)
 {
+	// If the character is eliminated, then directly return to avoid spam, or the character will be spawned multiple times.
+	if (Health <= 0.f) return;
+	
 	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
 
 	UpdateHealth();
@@ -676,6 +673,22 @@ bool ABlasterCharacter::IsAiming() const
 bool ABlasterCharacter::IsFireButtonPressed() const
 {
 	return (Combat && Combat->bFireButtonPressed);
+}
+
+void ABlasterCharacter::SetIsRespawned()
+{
+	// IsRespawned will restore its default value since the character is respawned.
+	IsRespawned = true;
+	HandleIsRespawned();
+}
+
+void ABlasterCharacter::HandleIsRespawned()
+{
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(GetController());
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->RefreshHUD();
+	}
 }
 
 ECombatState ABlasterCharacter::GetCombatState() const

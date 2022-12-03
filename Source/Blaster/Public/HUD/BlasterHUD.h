@@ -28,6 +28,9 @@ public:
 	/** Add Announcement Widget when MatchState is WaitingToStart, because this MatchState is too early, so the HUD is not
 	 ** available since the MatchState is set, we need to call this function in BeginPlay() */
 	void AddAnnouncement();
+
+	/* Refresh the HUD when the character overlay is added to the viewport or the character is respawned. */
+	void Refresh();
 	
 protected:
 	virtual void BeginPlay() override;

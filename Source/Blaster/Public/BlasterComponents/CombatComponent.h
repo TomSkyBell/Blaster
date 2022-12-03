@@ -23,6 +23,9 @@ public:
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	void SetCombatState(const ECombatState State);
 	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo <= 0; }
+	FORCEINLINE bool IsGrenadeEmpty() const { return Grenade <= 0; }
+	FORCEINLINE int32 GetGrenadeAmount() const { return Grenade; }
+	void SetGrenadeAmount(int32 Amount);
 	
 	/* Reload Animation Notify, we call it directly in AnimNotifyReload.cpp */
 	void ReloadAnimNotify();
@@ -231,4 +234,14 @@ private:
 	/* Projectile class, grenade */
 	UPROPERTY(EditAnywhere, Category = TSubclass)
 	TSubclassOf<AProjectile> ProjectileClass;
+
+	UPROPERTY(EditAnywhere, Category = Ammo, ReplicatedUsing = OnRep_Grenade)
+	int32 Grenade = 4;
+
+	UFUNCTION()
+	void OnRep_Grenade();
+	void HandleGrenadeRep();
+
+	UPROPERTY(EditAnywhere, Category = Ammo)
+	int32 MaxGrenade = 4;
 };

@@ -56,5 +56,7 @@ public:
 
 	UPROPERTY(Transient, meta = (BindWidgetAnim))
 	class UWidgetAnimation* TimeBlink;
-	
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* GrenadeAmount;
 };

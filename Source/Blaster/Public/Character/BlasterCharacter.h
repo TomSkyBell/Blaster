@@ -220,7 +220,8 @@ public:
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
 	FORCEINLINE void SetHealth(const float HealthValue) { Health = HealthValue; }
 	FORCEINLINE void SetMaxHealth(const float MaxHealthValue) { MaxHealth = MaxHealthValue; }
-	FORCEINLINE void SetIsRespawned(bool bIsRespawned) { IsRespawned = bIsRespawned; }
+	void SetIsRespawned();
+	void HandleIsRespawned();
 	ECombatState GetCombatState() const;
 	void SetCombatState(ECombatState State);
 	UAnimMontage* GetReloadMontage() const { return ReloadMontage; }

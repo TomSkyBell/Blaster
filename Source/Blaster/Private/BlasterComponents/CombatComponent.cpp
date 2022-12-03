@@ -61,6 +61,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// Carried Ammo is correlated with the HUD Ammo, HUD can only be updated on the owning client, so we should declare
 	// the Ammo as COND_OwnerOnly except that the Ammo need shared among the clients.
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(UCombatComponent, Grenade, COND_OwnerOnly);
 }
 
 // This function is invoked from the server.
@@ -468,14 +469,14 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 	if (!BlasterCharacter || !BlasterCharacter->GetMesh()) return;
 	
 	// Spawn and launch grenade.
-	if (const UStaticMeshComponent* Grenade = BlasterCharacter->GetGrenadeAttached())
+	if (const UStaticMeshComponent* GrenadeMesh = BlasterCharacter->GetGrenadeAttached())
 	{
-		const FVector Dir = Target - Grenade->GetComponentLocation();
+		const FVector Dir = Target - GrenadeMesh->GetComponentLocation();
 
 		// The socket location is in the collision range of hand's capsule mesh, so we need to spawn a bit further from the
 		// original location to avoid collision.
 		constexpr float SafeDist = 50.f;
-		const FVector SpawnLocation = Grenade->GetComponentLocation() + Dir.GetSafeNormal() * SafeDist;
+		const FVector SpawnLocation = GrenadeMesh->GetComponentLocation() + Dir.GetSafeNormal() * SafeDist;
 		
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = BlasterCharacter;
@@ -494,14 +495,16 @@ void UCombatComponent::ServerLaunchGrenade_Implementation(const FVector_NetQuant
 
 void UCombatComponent::ServerThrowGrenade_Implementation()
 {
-	if (!BlasterCharacter || CombatState != ECombatState::ECS_Unoccupied) return;
+	if (!BlasterCharacter || CombatState != ECombatState::ECS_Unoccupied || IsGrenadeEmpty()) return;
 	
 	SetCombatState(ECombatState::ECS_Throwing);
+	SetGrenadeAmount(Grenade - 1);
 
 	// AttachActor() executed on server has a multicast effect.
 	AttachWeaponToLeftHand();
 	
 	BlasterCharacter->PlayThrowGrenadeMontage();
+	
 }
 
 void UCombatComponent::AttachWeaponToLeftHand()
@@ -531,6 +534,29 @@ void UCombatComponent::ShowGrenadeAttached(bool IsVisible)
 	if (!BlasterCharacter || !BlasterCharacter->GetGrenadeAttached()) return;
 	
 	BlasterCharacter->GetGrenadeAttached()->SetVisibility(IsVisible);
+}
+
+void UCombatComponent::SetGrenadeAmount(int32 Amount)
+{
+	Grenade = FMath::Clamp(Amount, 0, MaxGrenade);
+
+	HandleGrenadeRep();
+}
+
+void UCombatComponent::OnRep_Grenade()
+{
+	HandleGrenadeRep();
+}
+
+void UCombatComponent::HandleGrenadeRep()
+{
+	if (!BlasterCharacter || !BlasterCharacter->IsLocallyControlled()) return;
+	
+	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(BlasterCharacter->GetController());
+	if (BlasterPlayerController)
+	{
+		BlasterPlayerController->UpdateGrenade(Grenade);
+	}
 }
 
 void UCombatComponent::OnRep_CombatState()

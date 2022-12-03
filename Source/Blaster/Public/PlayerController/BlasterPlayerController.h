@@ -31,6 +31,7 @@ public:
 	void UpdateWeaponAmmo(int32 AmmoAmount);
 	void UpdateCarriedAmmo(int32 AmmoAmount);
 	void UpdateWeaponType(const FString& WeaponType);
+	void UpdateGrenade(int32 GrenadeAmount);
 	/** Update the warmup time before matching or update the cooldown time after the match has finished */
 	void UpdateAnnouncement(int32 Countdown);
 	/** Update the match time after matching */
