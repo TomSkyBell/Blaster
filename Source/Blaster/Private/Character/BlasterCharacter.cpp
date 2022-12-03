@@ -51,7 +51,6 @@ ABlasterCharacter::ABlasterCharacter()
 	GrenadeAttached = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GrenadeAttached"));
 	GrenadeAttached->SetupAttachment(GetMesh(), FName("GrenadeAttached"));
 	GrenadeAttached->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	GrenadeAttached->SetVisibility(false);
 
 	// Avoid the zooming effect (camera overlaps with the character)
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
@@ -72,9 +71,8 @@ void ABlasterCharacter::BeginPlay()
 	Super::BeginPlay();
 	
 	LastAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
-	
+	GrenadeAttached->SetVisibility(false);
 	if (HasAuthority()) OnTakeAnyDamage.AddDynamic(this, &ThisClass::ReceiveDamage);
-	
 }
 
 void ABlasterCharacter::Tick(float DeltaTime)

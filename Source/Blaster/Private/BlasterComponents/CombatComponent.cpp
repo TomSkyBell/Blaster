@@ -11,6 +11,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "PlayerController/BlasterPlayerController.h"
+#include "Weapon/Projectile.h"
 
 UCombatComponent::UCombatComponent()
 {
@@ -411,12 +412,12 @@ void UCombatComponent::ThrowGrenadeAnimNotify()
 
 void UCombatComponent::LaunchGrenadeAnimNotify()
 {
-	// There is no replication, so we don't need to check has authority.
-	
-	// Spawn and launch the grenade.
-	
-
-	// Hide the grenade attached mesh.
+	// Spawn on the server and replicate on all clients because grenade is a replicate.
+	if (BlasterCharacter && BlasterCharacter->HasAuthority())
+	{
+		LaunchGrenade();
+	}
+	// Hide the grenade mesh on all machine.
 	ShowGrenadeAttached(false);
 }
 
@@ -458,6 +459,35 @@ void UCombatComponent::ReloadAmmoAmount()
 void UCombatComponent::ThrowGrenade()
 {
 	ServerThrowGrenade();
+}
+
+void UCombatComponent::LaunchGrenade()
+{
+	if (!BlasterCharacter || !BlasterCharacter->GetMesh()) return;
+	
+	// Spawn and launch grenade.
+	if (const UStaticMeshComponent* Grenade = BlasterCharacter->GetGrenadeAttached())
+	{
+		const FVector Dir = HitTarget - Grenade->GetComponentLocation();
+
+		// The socket location is in the collision range of hand's capsule mesh, so we need to spawn a bit further from the
+		// original location to avoid collision.
+		constexpr float SafeDist = 50.f;
+		const FVector SpawnLocation = Grenade->GetComponentLocation() + Dir.GetSafeNormal() * SafeDist;
+		
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = BlasterCharacter;
+		SpawnParams.Instigator = BlasterCharacter;
+		if (UWorld* World = GetWorld())
+		{
+			World->SpawnActor<AProjectile>(
+				ProjectileClass,
+				SpawnLocation,
+				Dir.Rotation(),
+				SpawnParams
+			);
+		}
+	}
 }
 
 void UCombatComponent::ServerThrowGrenade_Implementation()
