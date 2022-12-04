@@ -29,14 +29,6 @@ protected:
 		const FHitResult& SweepResult
 	);
 
-	UFUNCTION()
-	virtual void OnSphereEndOverlap(
-		UPrimitiveComponent* OverlappedComponent,
-		AActor* OtherActor,
-		UPrimitiveComponent* OtherComp,
-		int32 OtherBodyIndex
-	);
-
 private:
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* PickupMesh;
@@ -47,6 +39,6 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* PickupWidget;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = Effect)
 	class USoundCue* SoundPickup;
 };

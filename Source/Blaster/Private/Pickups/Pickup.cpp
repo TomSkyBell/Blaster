@@ -3,6 +3,7 @@
 
 #include "Pickups/Pickup.h"
 
+#include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Sound/SoundCue.h"
@@ -58,20 +59,10 @@ void APickup::BeginPlay()
 	{
 		PickupCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		PickupCollision->OnComponentBeginOverlap.AddDynamic(this, &APickup::OnSphereBeginOverlap);
-		PickupCollision->OnComponentEndOverlap.AddDynamic(this, &APickup::OnSphereEndOverlap);
 	}
-	// Synchronize the movement when we drop the pick up or the pick up is push by other force.
-	// Virtual function better not be called in ctor.
-	SetReplicateMovement(true);
 }
 
 void APickup::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	
+	if (Cast<ABlasterCharacter>(OtherActor)) Destroy();
 }
-
-void APickup::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	
-}
-

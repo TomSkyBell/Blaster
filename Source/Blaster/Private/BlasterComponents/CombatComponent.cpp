@@ -85,8 +85,7 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 
 	// Initialize the HUD and Ammo Map.
 	EquippedWeapon->SetHUDAmmo();
-	AccessCarriedAmmoMap();
-	SetHUDCarriedAmmo();
+	UpdateCarriedAmmoFromMap();
 	SetHUDWeaponType();
 
 	// Play equip sound.
@@ -136,8 +135,26 @@ void UCombatComponent::OnRep_EquippedWeapon()
 void UCombatComponent::SetCombatState(const ECombatState State)
 {
 	CombatState = State;
-
 	HandleCombatState();
+}
+
+void UCombatComponent::SetCarriedAmmo(int32 Amount)
+{
+	CarriedAmmo = Amount;
+	HandleCarriedAmmo();
+}
+
+void UCombatComponent::HandleCarriedAmmo()
+{
+	SetHUDCarriedAmmo();
+	UpdateCarriedAmmoToMap();
+
+	// Jump to the end section of animation when the carried ammo is not enough to fulfill the clip or the clip has been fulfilled during reloading.
+	if (EquippedWeapon && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+		(EquippedWeapon->IsAmmoFull() || IsCarriedAmmoEmpty() && !EquippedWeapon->IsAmmoFull()))
+	{
+		JumpToShotgunEnd();
+	}
 }
 
 void UCombatComponent::SetAiming(bool bIsAiming)
@@ -264,23 +281,40 @@ void UCombatComponent::InitCarriedAmmoMap()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, 4);
 }
 
-void UCombatComponent::AccessCarriedAmmoMap()
+void UCombatComponent::UpdateCarriedAmmoFromMap()
 {
 	if (!EquippedWeapon) return;
 	
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
-		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		SetCarriedAmmo(CarriedAmmoMap[EquippedWeapon->GetWeaponType()]);
 	}
 }
 
-void UCombatComponent::UpdateCarriedAmmoMap()
+int32 UCombatComponent::GetCarriedAmmoFromMap(EWeaponType WeaponType)
+{
+	if (CarriedAmmoMap.Contains(WeaponType))
+	{
+		return CarriedAmmoMap[WeaponType];
+	}
+	return -1;
+}
+
+void UCombatComponent::UpdateCarriedAmmoToMap()
 {
 	if (!EquippedWeapon) return;
 	
 	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
 	{
 		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] = CarriedAmmo;
+	}
+}
+
+void UCombatComponent::UpdateCarriedAmmoToMap(const TPair<EWeaponType, int32>& CarriedAmmoPair)
+{
+	if (CarriedAmmoMap.Contains(CarriedAmmoPair.Key))
+	{
+		CarriedAmmoMap[CarriedAmmoPair.Key] = CarriedAmmoPair.Value;
 	}
 }
 
@@ -322,14 +356,7 @@ void UCombatComponent::SetHUDWeaponType()
 
 void UCombatComponent::OnRep_CarriedAmmo()
 {
-	SetHUDCarriedAmmo();
-	UpdateCarriedAmmoMap();
-
-	// Jump to the end section of animation when the carried ammo is not enough to fulfill the clip when reloading the shotgun.
-	if (EquippedWeapon && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun && IsCarriedAmmoEmpty() && !EquippedWeapon->IsAmmoFull())
-	{
-		JumpToShotgunEnd();
-	}
+	HandleCarriedAmmo();
 }
 
 void UCombatComponent::ReloadAnimNotify()
@@ -356,7 +383,7 @@ void UCombatComponent::ReloadAnimNotify()
 	// are doing the replication on the server, the OnRep_ only work on the clients, and the simulated proxy's data
 	// won't simultaneously updated with the clients, so the server won't know about the change, which will lead
 	// to a wrong simulation, that's why we do the same work of OnRep_ on the server.
-	UpdateCarriedAmmoMap();
+	UpdateCarriedAmmoToMap();
 	
 	// bFireButtonPressed can only be accessed through the owning client, so it doesn't have to be in HasAuthority().
 	// If the weapon is an automatic weapon, we can directly fire after finish reloading, if it's a semi-auto weapon,
@@ -379,14 +406,7 @@ void UCombatComponent::ShotgunShellAnimNotify()
 		// For shotgun, change 1 ammo per reload.
 		EquippedWeapon->SetAmmo(EquippedWeapon->GetAmmo() + 1);
 		EquippedWeapon->SetHUDAmmo();
-	
-		CarriedAmmo -= 1;
-		SetHUDCarriedAmmo();
-		UpdateCarriedAmmoMap();
-
-		// If the clip is full or the carried ammo is all reloaded, we directly jump to the end of the animation.
-		// Remember to do the work in OnRep_Ammo() and OnRep_CarriedAmmo().
-		if (EquippedWeapon->IsAmmoFull() || CarriedAmmo == 0) JumpToShotgunEnd();
+		SetCarriedAmmo(GetCarriedAmmo() - 1);
 	}
 }
 
@@ -447,7 +467,8 @@ void UCombatComponent::ReloadAmmoAmount()
 	if (CarriedAmmo >= (EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo()))
 	{
 		// Sequence is important
-		CarriedAmmo -= EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo();
+		const int32 AmmoSupplied = EquippedWeapon->GetClipSize() - EquippedWeapon->GetAmmo();
+		SetCarriedAmmo(CarriedAmmo - AmmoSupplied);
 		EquippedWeapon->SetAmmo(EquippedWeapon->GetClipSize());
 	}
 	// If the carried ammo cannot full the clip after reloading.
@@ -455,7 +476,7 @@ void UCombatComponent::ReloadAmmoAmount()
 	{
 		// Sequence is important
 		EquippedWeapon->SetAmmo(EquippedWeapon->GetAmmo() + CarriedAmmo);
-		CarriedAmmo = 0;
+		SetCarriedAmmo(0);
 	}
 }
 

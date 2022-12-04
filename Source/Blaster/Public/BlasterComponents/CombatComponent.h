@@ -20,15 +20,23 @@ public:
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void EquipWeapon(class AWeapon* WeaponToEquip);
+	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }
 	void SetCombatState(const ECombatState State);
 	FORCEINLINE bool IsCarriedAmmoEmpty() const { return CarriedAmmo <= 0; }
+	FORCEINLINE int32 GetCarriedAmmo() const { return CarriedAmmo; }
+	void SetCarriedAmmo(int32 Amount);
+	void SetHUDCarriedAmmo();
+	void HandleCarriedAmmo();
+	int32 GetCarriedAmmoFromMap(EWeaponType WeaponType);
+	void UpdateCarriedAmmoToMap(const TPair<EWeaponType, int32>& CarriedAmmoPair);
 	FORCEINLINE bool IsGrenadeEmpty() const { return Grenade <= 0; }
 	FORCEINLINE int32 GetGrenadeAmount() const { return Grenade; }
 	void SetGrenadeAmount(int32 Amount);
 	
 	/* Reload Animation Notify, we call it directly in AnimNotifyReload.cpp */
 	void ReloadAnimNotify();
+	void Reload();
 
 	/* Reload the shotgun AnimNotify. */
 	UFUNCTION(BlueprintCallable)
@@ -188,12 +196,10 @@ private:
 	 */
 
 	
-	void SetHUDCarriedAmmo();
 	void InitCarriedAmmoMap();
-	void AccessCarriedAmmoMap();
-	void UpdateCarriedAmmoMap();
 	void SetHUDWeaponType();
-	void Reload();
+	void UpdateCarriedAmmoFromMap();
+	void UpdateCarriedAmmoToMap();
 	void ReloadAmmoAmount();
 
 	UFUNCTION(Server, Reliable)
