@@ -33,6 +33,7 @@ public:
 	void Dropped();
 	void SpendRound();
 	void SetHUDAmmo();
+	void SetAmmo(const int32 Amount);
 	
 protected:
 	virtual void BeginPlay() override;
@@ -131,13 +132,16 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Weapon Properties", ReplicatedUsing = OnRep_Ammo)
 	int32 Ammo = 30;
 
-	/* Clip size */
-	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
-	int32 ClipSize = 45;
-
 	/* Ammo replication notify */
 	UFUNCTION()
 	virtual void OnRep_Ammo();
+
+	/* Update ammo amount, HUD */
+	void HandleAmmo();
+
+	/* Clip size */
+	UPROPERTY(EditAnywhere, Category = "Weapon Properties")
+	int32 ClipSize = 45;
 
 	/* We need to make sure the owner exists when we update the ammo HUD which depends on the owner. */
 	virtual void OnRep_Owner() override;
@@ -160,7 +164,6 @@ public:
 	FORCEINLINE bool GetCanAutoFire() const { return CanAutoFire; }
 	FORCEINLINE bool GetCanSemiAutoFire() const { return CanSemiAutoFire; }
 	FORCEINLINE int32 GetAmmo() const { return Ammo; }
-	FORCEINLINE void SetAmmo(const int32 AmmoAmount) { Ammo = AmmoAmount; }
 	FORCEINLINE int32 GetClipSize() const { return ClipSize; }
 	FORCEINLINE void SetClipSize(const int32 Size) { ClipSize = Size; }
 	FORCEINLINE bool IsAmmoEmpty() const { return Ammo <= 0; }

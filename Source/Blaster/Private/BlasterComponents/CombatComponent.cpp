@@ -83,11 +83,11 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// Owner is built-in replicated variable.
 	EquippedWeapon->SetOwner(BlasterCharacter);
 
-	// Initialize the HUD and Ammo Map.
-	EquippedWeapon->SetHUDAmmo();
-	UpdateCarriedAmmoFromMap();
+	// Show the HUD: weapon type, ammo amount, carried ammo amount.
 	SetHUDWeaponType();
-
+	EquippedWeapon->SetHUDAmmo();
+	SetCarriedAmmoFromMap(EquippedWeapon->GetWeaponType());	// Set carried ammo and display the HUD.
+	
 	// Play equip sound.
 	if (BlasterCharacter->IsLocallyControlled())
 	{
@@ -97,12 +97,6 @@ void UCombatComponent::EquipWeapon(AWeapon* WeaponToEquip)
 	// The server solely set the properties, the clients' are set in the OnRep function.
 	BlasterCharacter->GetCharacterMovement()->bOrientRotationToMovement = false;
 	BlasterCharacter->bUseControllerRotationYaw = true;
-
-	// It's ideal and easy to think of setting the cross hair hud once we equip the weapon, but we need to take care that
-	// this functionality is implemented on the server and the server cannot get the client's hud since the client's remote
-	// role is autonomous proxy and it's not allowed. (Other side, it makes sense, right? We cannot set the hud remotely from
-	// another machine.) That's why we finally choose to put the functionality into the tick part.
-	// SetHUDCrosshairs();
 }
 
 void UCombatComponent::OnRep_EquippedWeapon()
@@ -146,11 +140,13 @@ void UCombatComponent::SetCarriedAmmo(int32 Amount)
 
 void UCombatComponent::HandleCarriedAmmo()
 {
+	if (!EquippedWeapon) return;
+	
 	SetHUDCarriedAmmo();
-	UpdateCarriedAmmoToMap();
+	UpdateCarriedAmmoMap({EquippedWeapon->GetWeaponType(), CarriedAmmo});
 
 	// Jump to the end section of animation when the carried ammo is not enough to fulfill the clip or the clip has been fulfilled during reloading.
-	if (EquippedWeapon && EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
+	if (EquippedWeapon->GetWeaponType() == EWeaponType::EWT_Shotgun &&
 		(EquippedWeapon->IsAmmoFull() || IsCarriedAmmoEmpty() && !EquippedWeapon->IsAmmoFull()))
 	{
 		JumpToShotgunEnd();
@@ -281,13 +277,11 @@ void UCombatComponent::InitCarriedAmmoMap()
 	CarriedAmmoMap.Emplace(EWeaponType::EWT_GrenadeLauncher, 4);
 }
 
-void UCombatComponent::UpdateCarriedAmmoFromMap()
+void UCombatComponent::SetCarriedAmmoFromMap(EWeaponType WeaponType)
 {
-	if (!EquippedWeapon) return;
-	
-	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	if (CarriedAmmoMap.Contains(WeaponType))
 	{
-		SetCarriedAmmo(CarriedAmmoMap[EquippedWeapon->GetWeaponType()]);
+		SetCarriedAmmo(CarriedAmmoMap[WeaponType]);
 	}
 }
 
@@ -300,17 +294,7 @@ int32 UCombatComponent::GetCarriedAmmoFromMap(EWeaponType WeaponType)
 	return -1;
 }
 
-void UCombatComponent::UpdateCarriedAmmoToMap()
-{
-	if (!EquippedWeapon) return;
-	
-	if (CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
-	{
-		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] = CarriedAmmo;
-	}
-}
-
-void UCombatComponent::UpdateCarriedAmmoToMap(const TPair<EWeaponType, int32>& CarriedAmmoPair)
+void UCombatComponent::UpdateCarriedAmmoMap(const TPair<EWeaponType, int32>& CarriedAmmoPair)
 {
 	if (CarriedAmmoMap.Contains(CarriedAmmoPair.Key))
 	{
@@ -362,32 +346,13 @@ void UCombatComponent::OnRep_CarriedAmmo()
 void UCombatComponent::ReloadAnimNotify()
 {
 	if (!BlasterCharacter || !EquippedWeapon) return;
-	
-	/***************************************  Replciation Problem  ****************************************/
-	// Normally, we should put these in the HasAuthority() check, and using the replication to make the clients
-	// do the work, but it will cause the replicating delay problem, for instance, the HUD cannot display the ammo
-	// amount correctly (still don't know why) and when we fire(), we need to check the weapon ammo ?= 0, but
-	// the ammo may not be updated due to the replicating delay, leading to the failure in fire(), so we take the
-	// action to do it locally again instead of just waiting for the unstable replication.
-	BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
-	ReloadAmmoAmount();
-	
-	EquippedWeapon->SetHUDAmmo();
-	SetHUDCarriedAmmo();
 
-	/**************************************  Simulation On Server  ****************************************/
-	// At the start of the game, the simulated proxy on the server, which means server does the simulation
-	// for the working of this proxy, will transmit the same data as the owning client of this proxy. But
-	// with the time advances, these two(owning client and the simulated client on the server) have the different
-	// data, for instance when we press the button on the owning client, the server won't know about it, when we
-	// are doing the replication on the server, the OnRep_ only work on the clients, and the simulated proxy's data
-	// won't simultaneously updated with the clients, so the server won't know about the change, which will lead
-	// to a wrong simulation, that's why we do the same work of OnRep_ on the server.
-	UpdateCarriedAmmoToMap();
+	/* Rep notify problem. bFireButtonPressed and bAutomaticFire are local variables, so we should not check
+	 * authority here, or the client will immediately call Fire() while the Ammo is not updated. */
+	BlasterCharacter->SetCombatState(ECombatState::ECS_Unoccupied);
+	ReloadAmmoAmount();	// Ammo and CarriedAmmo Rep Notify triggered.
 	
-	// bFireButtonPressed can only be accessed through the owning client, so it doesn't have to be in HasAuthority().
-	// If the weapon is an automatic weapon, we can directly fire after finish reloading, if it's a semi-auto weapon,
-	// we need to repress the button to make a feeling like delay.
+	// Local variable, so we needn't check IsLocallyControlled().
 	if (bFireButtonPressed && bAutomaticFire) Fire();
 }
 

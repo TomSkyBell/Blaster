@@ -29,7 +29,8 @@ public:
 	void SetHUDCarriedAmmo();
 	void HandleCarriedAmmo();
 	int32 GetCarriedAmmoFromMap(EWeaponType WeaponType);
-	void UpdateCarriedAmmoToMap(const TPair<EWeaponType, int32>& CarriedAmmoPair);
+	void SetCarriedAmmoFromMap(EWeaponType WeaponType);
+	void UpdateCarriedAmmoMap(const TPair<EWeaponType, int32>& CarriedAmmoPair);
 	FORCEINLINE bool IsGrenadeEmpty() const { return Grenade <= 0; }
 	FORCEINLINE int32 GetGrenadeAmount() const { return Grenade; }
 	void SetGrenadeAmount(int32 Amount);
@@ -198,8 +199,6 @@ private:
 	
 	void InitCarriedAmmoMap();
 	void SetHUDWeaponType();
-	void UpdateCarriedAmmoFromMap();
-	void UpdateCarriedAmmoToMap();
 	void ReloadAmmoAmount();
 
 	UFUNCTION(Server, Reliable)

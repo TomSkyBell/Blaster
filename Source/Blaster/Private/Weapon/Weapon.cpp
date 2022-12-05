@@ -128,14 +128,24 @@ void AWeapon::Dropped()
 }
 
 void AWeapon::SpendRound()
-{
-	Ammo -= 1;
-	
-	SetHUDAmmo();
-	
+{	
+	SetAmmo(Ammo - 1);	
 }
 
 void AWeapon::OnRep_Ammo()
+{
+	HandleAmmo();
+}
+
+void AWeapon::SetAmmo(const int32 Amount)
+{
+	if (Amount < 0 || Amount > ClipSize) return;
+	
+	Ammo = Amount;
+	HandleAmmo();
+}
+
+void AWeapon::HandleAmmo()
 {
 	SetHUDAmmo();
 

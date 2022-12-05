@@ -12,17 +12,18 @@ void APickupAmmo::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,
 		if (UCombatComponent* Combat = BlasterCharacter->GetCombat())
 		{
 			// Update the carried ammo map no matter whether the ammo type is the weapon type.
-			const int32 CarriedAmmo = Combat->GetCarriedAmmoFromMap(AmmoType);
-			if (CarriedAmmo != -1)
+			const int32 AmmoFromMap = Combat->GetCarriedAmmoFromMap(AmmoType);
+			if (AmmoFromMap != -1)
 			{
-				Combat->UpdateCarriedAmmoToMap({AmmoType, CarriedAmmo + PickupAmmo});
+				// Lazy update.  We update the CarriedAmmoMap on the server but not rep notify immediately.
+				// Only when the character equips the weapon then we rep notify the CarriedAmmoMap.
+				Combat->UpdateCarriedAmmoMap({AmmoType, AmmoFromMap + PickupAmmo});
 			}
 			const AWeapon* EquippedWeapon = Combat->GetEquippedWeapon();
 			if (EquippedWeapon && AmmoType == EquippedWeapon->GetWeaponType())
 			{
-				// If the weapon type is the ammo type, then we can change the carried ammo and refresh the HUD
-				Combat->SetCarriedAmmo(CarriedAmmo + PickupAmmo);
-				Combat->SetHUDCarriedAmmo();
+				// If the weapon type is the ammo type, then RepNotify, 1. CarriedAmmo 2. CarriedAmmoMap 3. HUD
+				Combat->SetCarriedAmmo(AmmoFromMap + PickupAmmo);
 
 				// We automatically reload the weapon once we pick up the ammo and the ammo of the weapon is empty.
 				if (EquippedWeapon->IsAmmoEmpty()) Combat->Reload();
