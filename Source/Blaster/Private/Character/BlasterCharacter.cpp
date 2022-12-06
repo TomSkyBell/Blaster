@@ -12,6 +12,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
 #include "Blaster/Blaster.h"
+#include "BlasterComponents/BuffComponent.h"
 #include "GameMode/BlasterGameMode.h"
 #include "HUD/CharacterOverlay.h"
 #include "Kismet/GameplayStatics.h"
@@ -44,6 +45,8 @@ ABlasterCharacter::ABlasterCharacter()
 
 	Combat = CreateDefaultSubobject<UCombatComponent>(TEXT("Combat Component"));
 	Combat->SetIsReplicated(true);
+	Buff = CreateDefaultSubobject<UBuffComponent>(TEXT("Buff Component"));
+	Buff->SetIsReplicated(true);
 
 	TimelineComponent = CreateDefaultSubobject<UTimelineComponent>(TEXT("Timeline Component"));
 
@@ -601,6 +604,10 @@ void ABlasterCharacter::PostInitializeComponents()
 	if (Combat)
 	{
 		Combat->BlasterCharacter = this;
+	}
+	if (Buff)
+	{
+		Buff->BlasterCharacter = this;
 	}
 }
 

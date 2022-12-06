@@ -194,13 +194,24 @@ private:
 	USoundBase* ElimBotSound;
 
 	void PlayElimBotEffect();
+	
 
 	/**
 	 *	Attachment -- Grenade Mesh
 	 */
 
+	
 	UPROPERTY(VisibleAnywhere, Category = Attachment)
 	UStaticMeshComponent* GrenadeAttached;
+
+
+	/**
+	 *	Buff component
+	 */
+
+
+	UPROPERTY(VisibleAnywhere, Category = Buff)
+	class UBuffComponent* Buff;
 
 public:
 	bool IsWeaponEquipped() const;
