@@ -17,6 +17,9 @@ public:
 	UBuffComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
+	/* Healing */
+	void Heal(float Amount, float Duration);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -24,4 +27,19 @@ private:
 	/* Initialized in BlasterCharacter.cpp, PostInitializeComponents(). */
 	UPROPERTY()
 	class ABlasterCharacter* BlasterCharacter;
+
+
+	/**
+	 *	Healing
+	 */
+
+
+	UPROPERTY(EditAnywhere, Category = Health)
+	float HealingTimerRate = 0.02f;
+	
+	FTimerHandle HealingTimerHandle;
+	float HealthAmount;
+	float HealthDuration;
+	float TimeRemaining;
+	void Healing();
 };

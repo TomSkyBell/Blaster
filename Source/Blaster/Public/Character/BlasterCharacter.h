@@ -147,7 +147,7 @@ private:
 	void RespawnTimerFinished();
 
 	UFUNCTION()
-	void OnRep_Health();
+	void OnRep_Health(const float LastValue);
 
 	UFUNCTION()
 	void OnRep_IsRespawned();
@@ -158,7 +158,7 @@ private:
 	UFUNCTION()
 	void ReceiveDamage(AActor* DamagedActor, float Damage, const class UDamageType* DamageType, class AController* InstigatedBy, AActor* DamageCauser);
 
-	void UpdateHealth();
+	void SetHUDHealth();
 	void PlayHitReactMontage() const;
 	void PlayDeathHipMontage() const;
 	void PlayDeathIronMontage() const;
@@ -218,7 +218,7 @@ public:
 	bool IsAiming() const;
 
 	UFUNCTION(BlueprintCallable)
-	UCombatComponent* GetCombat() const { return Combat ? Combat : nullptr; }
+	UCombatComponent* GetCombat() const { return Combat; }
 	
 	FORCEINLINE float GetAO_Yaw() const { return AO_Yaw; }
 	FORCEINLINE float GetAO_Pitch() const { return AO_Pitch; }
@@ -229,7 +229,8 @@ public:
 	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	FORCEINLINE float GetHealth() const { return Health; }
 	FORCEINLINE float GetMaxHealth() const { return MaxHealth; }
-	FORCEINLINE void SetHealth(const float HealthValue) { Health = HealthValue; }
+	void SetHealth(const float HealthValue);
+	void HandleHealth(const bool IsHealthUp);
 	FORCEINLINE void SetMaxHealth(const float MaxHealthValue) { MaxHealth = MaxHealthValue; }
 	void SetIsRespawned();
 	void HandleIsRespawned();
@@ -237,4 +238,5 @@ public:
 	void SetCombatState(ECombatState State);
 	UAnimMontage* GetReloadMontage() const { return ReloadMontage; }
 	UStaticMeshComponent* GetGrenadeAttached() const { return GrenadeAttached; }
+	UBuffComponent* GetBuff() const { return Buff; }
 };

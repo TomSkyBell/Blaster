@@ -226,10 +226,10 @@ void ABlasterCharacter::RespawnTimerFinished()
 	}
 }
 
-void ABlasterCharacter::OnRep_Health()
+void ABlasterCharacter::OnRep_Health(const float LastValue)
 {
-	UpdateHealth();
-	PlayHitReactMontage();
+	const bool IsHealthIncreased = Health > LastValue;
+	HandleHealth(IsHealthIncreased);
 }
 
 void ABlasterCharacter::OnRep_IsRespawned()
@@ -275,11 +275,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	// If the character is eliminated, then directly return to avoid spam, or the character will be spawned multiple times.
 	if (Health <= 0.f) return;
 	
-	Health = FMath::Clamp(Health - Damage, 0.f, MaxHealth);
-
-	UpdateHealth();
-	PlayHitReactMontage();
-
+	SetHealth(FMath::Clamp(Health - Damage, 0.f, MaxHealth));
 	if (Health <= 0.f && GetWorld())
 	{
 		if (ABlasterGameMode* BlasterGameMode = GetWorld()->GetAuthGameMode<ABlasterGameMode>())
@@ -291,7 +287,7 @@ void ABlasterCharacter::ReceiveDamage(AActor* DamagedActor, float Damage, const 
 	}
 }
 
-void ABlasterCharacter::UpdateHealth()
+void ABlasterCharacter::SetHUDHealth()
 {
 	BlasterPlayerController = BlasterPlayerController ? BlasterPlayerController : Cast<ABlasterPlayerController>(Controller);
 	if (!BlasterPlayerController) return;
@@ -680,6 +676,26 @@ bool ABlasterCharacter::IsAiming() const
 bool ABlasterCharacter::IsFireButtonPressed() const
 {
 	return (Combat && Combat->bFireButtonPressed);
+}
+
+void ABlasterCharacter::SetHealth(const float HealthValue)
+{
+	if (HealthValue < 0.f || HealthValue > MaxHealth) return;
+	
+	const bool IsHealthIncreased = Health < HealthValue;
+	Health = HealthValue;
+	HandleHealth(IsHealthIncreased);
+}
+
+void ABlasterCharacter::HandleHealth(const bool IsHealthUp)
+{
+	SetHUDHealth();
+
+	if (IsHealthUp) {}
+	else
+	{
+		PlayHitReactMontage();
+	}
 }
 
 void ABlasterCharacter::SetIsRespawned()
