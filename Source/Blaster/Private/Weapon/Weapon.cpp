@@ -39,7 +39,7 @@ AWeapon::AWeapon()
 
 	// Render -- Custom Depth Stencil
 	WeaponMesh->SetRenderCustomDepth(true);
-	
+	WeaponMesh->SetCustomDepthStencilValue(DEPTH_PURPLE);
 	
 	// Widget configuration.
 	PickupWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("Weapon Widget"));

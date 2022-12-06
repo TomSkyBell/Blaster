@@ -15,8 +15,8 @@ AProjectileRocket::AProjectileRocket()
 	BlasterProjectileMovementComponent->InitialSpeed = 2000.f;
 	BlasterProjectileMovementComponent->MaxSpeed = 2000.f;
 	BlasterProjectileMovementComponent->ProjectileGravityScale = 0.f;
-	
-	// We don't want the rocket destroyed immediately after it's hit, so we need to call the destroy manually after the timer finished.
+
+	// Destroyed and explode when it hits something.
 	bOnHitDestroy = true;	
 }
 

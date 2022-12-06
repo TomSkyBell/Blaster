@@ -18,12 +18,10 @@ AProjectile::AProjectile()
 	
 	CollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision Box"));
 	SetRootComponent(CollisionBox);
-	CollisionBox->SetCollisionObjectType(ECC_Projectile);
 	CollisionBox->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Block);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 	CollisionBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
-	CollisionBox->SetCollisionResponseToChannel(ECC_SkeletalMesh, ECollisionResponse::ECR_Block);
-	CollisionBox->SetCollisionResponseToChannel(ECC_Projectile, ECollisionResponse::ECR_Ignore);
+	CollisionBox->SetCollisionResponseToChannel(ECC_SKELETAL_MESH, ECollisionResponse::ECR_Block);
 
 	ProjectileMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Projectile Mesh"));
 	ProjectileMesh->SetupAttachment(RootComponent);

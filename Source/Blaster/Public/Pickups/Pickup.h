@@ -31,14 +31,24 @@ protected:
 
 private:
 	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* PickupMesh;
-
+	USceneComponent* SceneComponent;
+	
 	UPROPERTY(VisibleAnywhere)
 	class USphereComponent* PickupCollision;
-
+	
 	UPROPERTY(VisibleAnywhere)
-	class UWidgetComponent* PickupWidget;
+	UStaticMeshComponent* PickupMesh;
 
 	UPROPERTY(EditAnywhere, Category = Effect)
 	class USoundCue* SoundPickup;
+
+	UPROPERTY(EditAnywhere, Category = Effect)
+	float BaseTurnRate = 45.f;
+
+	FTimerHandle TurnTimerHandle;
+
+	UPROPERTY(EditAnywhere, Category = Effect)
+	float TurnTimerRate = 0.02f;
+	
+	void Turn();
 };
