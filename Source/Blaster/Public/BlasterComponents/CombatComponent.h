@@ -19,6 +19,16 @@ public:
 	friend class ABlasterCharacter;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	/* Change the character movement speed on the server has a multicast effect. */
+	void UpdateCharacterSpeed();
+	FORCEINLINE float GetBaseWalkSpeed() const { return BaseWalkSpeed; }
+	FORCEINLINE void SetBaseWalkSpeed(float Speed) { BaseWalkSpeed = Speed; }
+	FORCEINLINE float GetBaseWalkSpeedCrouched() const { return BaseCrouchWalkSpeed; }
+	FORCEINLINE void SetBaseWalkSpeedCrouched(float Speed) { BaseCrouchWalkSpeed = Speed; }
+	FORCEINLINE float GetAimWalkSpeed() const { return AimWalkSpeed; }
+	FORCEINLINE void SetAimWalkSpeed(float Speed) { AimWalkSpeed = Speed; }
+	FORCEINLINE float GetAimWalkSpeedCrouched() const { return AimCrouchWalkSpeed; }
+	FORCEINLINE void SetAimWalkSpeedCrouched(float Speed) { AimCrouchWalkSpeed = Speed; }
 	void EquipWeapon(class AWeapon* WeaponToEquip);
 	FORCEINLINE AWeapon* GetEquippedWeapon() const { return EquippedWeapon; }
 	FORCEINLINE ECombatState GetCombatState() const { return CombatState; }

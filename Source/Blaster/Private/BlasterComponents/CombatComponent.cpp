@@ -28,8 +28,7 @@ void UCombatComponent::BeginPlay()
 	// BlasterCharacter is initialized in BlasterCharacter.cpp, PostInitializeComponents() function.
 	if (BlasterCharacter)
 	{
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = BaseCrouchWalkSpeed;
+		UpdateCharacterSpeed();
 		DefaultFOV = BlasterCharacter->GetFollowCamera()->FieldOfView;
 		InterpFOV = DefaultFOV;
 		if (EquippedWeapon) CrosshairSpread = EquippedWeapon->CrosshairsMinSpread;
@@ -62,6 +61,15 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	// the Ammo as COND_OwnerOnly except that the Ammo need shared among the clients.
 	DOREPLIFETIME_CONDITION(UCombatComponent, CarriedAmmo, COND_OwnerOnly);
 	DOREPLIFETIME_CONDITION(UCombatComponent, Grenade, COND_OwnerOnly);
+}
+
+void UCombatComponent::UpdateCharacterSpeed()
+{
+	if (BlasterCharacter && BlasterCharacter->GetCharacterMovement())
+	{
+		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = bAiming ? AimWalkSpeed : BaseWalkSpeed;
+		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = bAiming ? AimCrouchWalkSpeed : BaseCrouchWalkSpeed;
+	}
 }
 
 // This function is invoked from the server.
@@ -160,11 +168,7 @@ void UCombatComponent::SetAiming(bool bIsAiming)
 	// If the ownership is self, then we'd better do the 'variable assignment' work in 'Set Aiming' right away rather than waiting for
 	// the 'ServerSetAiming' because ServerSetAiming is the RPC which needs time to transfer the replication from the server to the client.
 	bAiming = bIsAiming;
-	if (BlasterCharacter)
-	{
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = bIsAiming ? AimCrouchWalkSpeed : BaseCrouchWalkSpeed;
-	}
+	UpdateCharacterSpeed();
 	// If the ownership is client, it'll be invoked from the server; if the ownership is server, it'll be invoked from the server as well.
 	ServerSetAiming(bIsAiming);
 
@@ -181,11 +185,7 @@ void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)
 	
 	// CharacterMovementComponent is a powerful built-in component, supporting network replication,
 	// so if we wanna change the MaxWalkSpeed, we should do it on the server to let all the machines known.
-	if (BlasterCharacter)
-	{
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeed = bIsAiming ? AimWalkSpeed : BaseWalkSpeed;
-		BlasterCharacter->GetCharacterMovement()->MaxWalkSpeedCrouched = bIsAiming ? AimCrouchWalkSpeed : BaseCrouchWalkSpeed;
-	}
+	UpdateCharacterSpeed();
 }
 
 void UCombatComponent::ServerFire_Implementation(const FVector_NetQuantize& TraceHitTarget)

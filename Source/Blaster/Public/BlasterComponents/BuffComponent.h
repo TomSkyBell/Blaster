@@ -20,6 +20,9 @@ public:
 	/* Healing */
 	void Heal(float Amount, float Duration);
 
+	/* Speeding up */
+	void SpeedUp(float Scale, float Duration);
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -42,4 +45,17 @@ private:
 	float HealthDuration;
 	float TimeRemaining;
 	void Healing();
+
+
+	/**
+	 *	Speeding
+	 */
+
+	
+	FTimerHandle SpeedingTimerHandle;
+	float BaseWalkSpeed;
+	float BaseWalkSpeedCrouched;
+	float AimWalkSpeed;
+	float AimWalkSpeedCrouched;
+	void ResetSpeed();
 };

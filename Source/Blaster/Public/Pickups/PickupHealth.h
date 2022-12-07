@@ -16,8 +16,7 @@ class BLASTER_API APickupHealth : public APickup
 
 public:
 	APickupHealth();
-	virtual void Destroyed() override;
-
+	
 protected:
 	virtual void OnSphereBeginOverlap(
 		UPrimitiveComponent* OverlappedComponent,
@@ -34,10 +33,4 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = Health)
 	float Duration;
-
-	UPROPERTY(VisibleAnywhere, Category = Effect)
-	class UNiagaraComponent* NiagaraComponent;
-
-	UPROPERTY(EditAnywhere, Category = Effect)
-	class UNiagaraSystem* HealingEffect;
 };

@@ -5,6 +5,9 @@
 #include "Character/BlasterCharacter.h"
 #include "Components/SphereComponent.h"
 #include "Components/WidgetComponent.h"
+#include "NiagaraComponent.h"
+#include "NiagaraFunctionLibrary.h"
+#include "Engine/SkeletalMeshSocket.h"
 #include "Sound/SoundCue.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -18,7 +21,6 @@ APickup::APickup()
 	
 	PickupCollision = CreateDefaultSubobject<USphereComponent>(TEXT("Pickup Collision"));
 	PickupCollision->SetupAttachment(RootComponent);
-	PickupCollision->SetWorldScale3D(FVector(5.f, 5.f, 5.f));
 	PickupCollision->AddWorldOffset(FVector(0.f, 0.f, 85.f));
 	PickupCollision->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
 	PickupCollision->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
@@ -27,6 +29,9 @@ APickup::APickup()
 	PickupMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Pickup Mesh"));
 	PickupMesh->SetupAttachment(PickupCollision);
 	PickupMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	NiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("Niagara Component"));
+	NiagaraComponent->SetupAttachment(PickupCollision);
 	
 	// Stencil -- Outline effect
 	PickupMesh->SetRenderCustomDepth(true);
@@ -41,12 +46,11 @@ void APickup::Tick(float DeltaTime)
 void APickup::Destroyed()
 {
 	Super::Destroyed();
-
-	UGameplayStatics::PlaySoundAtLocation(
-		this,
-		SoundPickup,
-		GetActorLocation()
-	);
+	
+	if (SoundPickup)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, SoundPickup, GetActorLocation());
+	}
 }
 
 void APickup::BeginPlay()
@@ -63,7 +67,28 @@ void APickup::BeginPlay()
 
 void APickup::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (Cast<ABlasterCharacter>(OtherActor)) Destroy();
+	if (ABlasterCharacter* BlasterCharacter = Cast<ABlasterCharacter>(OtherActor))
+	{
+		MulticastSpawnBuffEffectAttached(BlasterCharacter);
+		Destroy();
+	}
+}
+
+void APickup::MulticastSpawnBuffEffectAttached_Implementation(ABlasterCharacter* AttachedCharacter) const
+{
+	if (NiagaraEffect && AttachedCharacter && AttachedCharacter->GetMesh())
+	{
+		const FVector BuffSocketLocation = AttachedCharacter->GetMesh()->GetSocketLocation(FName("BuffEffect"));
+		UNiagaraFunctionLibrary::SpawnSystemAttached(
+			NiagaraEffect,
+			AttachedCharacter->GetMesh(),
+			FName(),
+			BuffSocketLocation,
+			FRotator::ZeroRotator,
+			EAttachLocation::KeepWorldPosition,
+			true
+		);
+	}
 }
 
 void APickup::Turn()

@@ -3,6 +3,8 @@
 
 #include "BlasterComponents/BuffComponent.h"
 #include "Character/BlasterCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "BlasterComponents/CombatComponent.h"
 
 UBuffComponent::UBuffComponent()
 {
@@ -30,6 +32,31 @@ void UBuffComponent::Heal(float Amount, float Duration)
 	}
 }
 
+void UBuffComponent::SpeedUp(float Scale, float Duration)
+{
+	if (BlasterCharacter)
+	{
+		if (UCombatComponent* Combat = BlasterCharacter->GetCombat())
+		{
+			BaseWalkSpeed = Combat->GetBaseWalkSpeed();
+			BaseWalkSpeedCrouched = Combat->GetBaseWalkSpeedCrouched();
+			AimWalkSpeed = Combat->GetAimWalkSpeed();
+			AimWalkSpeedCrouched = Combat->GetAimWalkSpeedCrouched();
+			Combat->SetBaseWalkSpeed(Scale * BaseWalkSpeed);
+			Combat->SetBaseWalkSpeedCrouched(Scale * BaseWalkSpeedCrouched);
+			Combat->SetAimWalkSpeed(Scale * AimWalkSpeed);
+			Combat->SetAimWalkSpeedCrouched(Scale * AimWalkSpeedCrouched);
+
+			// Change the character movement speed on the server has a multicast effect.
+			Combat->UpdateCharacterSpeed();
+		}
+	}
+	if (const UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(SpeedingTimerHandle, this, &UBuffComponent::ResetSpeed, Duration, false);
+	}
+}
+
 void UBuffComponent::Healing()
 {
 	if (!BlasterCharacter) return;
@@ -50,3 +77,17 @@ void UBuffComponent::Healing()
 	BlasterCharacter->SetHealth(BlasterCharacter->GetHealth() + HealingAmountPerTick);
 }
 
+void UBuffComponent::ResetSpeed()
+{
+	if (BlasterCharacter)
+	{
+		if (UCombatComponent* Combat = BlasterCharacter->GetCombat())
+		{
+			Combat->SetBaseWalkSpeed(BaseWalkSpeed);
+			Combat->SetBaseWalkSpeedCrouched(BaseWalkSpeedCrouched);
+			Combat->SetAimWalkSpeed(AimWalkSpeed);
+			Combat->SetAimWalkSpeedCrouched(AimWalkSpeedCrouched);
+			Combat->UpdateCharacterSpeed();
+		}
+	}
+}

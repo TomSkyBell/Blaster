@@ -4,6 +4,15 @@
 #include "Pickups/PickupAmmo.h"
 #include "BlasterComponents/CombatComponent.h"
 #include "Character/BlasterCharacter.h"
+#include "Components/SphereComponent.h"
+
+APickupAmmo::APickupAmmo()
+{
+	if (PickupCollision)
+	{
+		PickupCollision->SetWorldScale3D(FVector(5.f, 5.f, 5.f));
+	}
+}
 
 void APickupAmmo::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
